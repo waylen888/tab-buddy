@@ -1,7 +1,6 @@
-import { Box, IconButton } from '@mui/joy';
+import { Box } from '@mui/joy';
 import Typography from '@mui/joy/Typography';
-import Avatar from '@mui/joy/Avatar';
-import MapsHomeWorkIcon from '@mui/icons-material/MapsHomeWork';
+
 // import ColorSchemeToggle from './ColorSchemeToggle';
 
 export default function HeaderSection() {
