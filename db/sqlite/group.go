@@ -109,10 +109,10 @@ func (s *sqlite) DeleteGroup(ID string) error {
 	return err
 }
 
-func (s *sqlite) GetGroupExpenses(groupID string) ([]entity.Expense, error) {
+func (s *sqlite) GetGroupExpenses(groupID string) ([]entity.ExpenseWithSplitUser, error) {
 	ctx, cancel := context.WithTimeout(context.TODO(), s.timeout)
 	defer cancel()
-	var expenses []entity.Expense
+	var expenses []entity.ExpenseWithSplitUser
 
 	if err := sqlscan.Select(
 		ctx, s.rwDB, &expenses,
@@ -126,6 +126,21 @@ func (s *sqlite) GetGroupExpenses(groupID string) ([]entity.Expense, error) {
 		sql.Named("group_id", groupID),
 	); err != nil {
 		return nil, err
+	}
+
+	for i := range expenses {
+		expense := &expenses[i]
+		err := sqlscan.Select(
+			ctx, s.rwDB, &expense.SplitUsers,
+			`SELECT id, username, display_name, email, create_at, update_at, paid
+			FROM user JOIN user_expense
+			ON user.id = user_expense.user_id 
+			WHERE user_expense.expense_id = @id`,
+			sql.Named("id", expense.ID),
+		)
+		if err != nil {
+			return expenses, err
+		}
 	}
 	return expenses, nil
 }

@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/samber/lo"
+	"github.com/shopspring/decimal"
 	"github.com/waylen888/tab-buddy/db"
 	"github.com/waylen888/tab-buddy/db/entity"
 	"github.com/waylen888/tab-buddy/server/model"
@@ -224,14 +225,29 @@ func (h *APIHandler) getGroupExpenses(ctx *gin.Context) {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
-	ctx.JSON(http.StatusOK, lo.Map(expenses, func(expense entity.Expense, _ int) model.Expense {
-		return model.Expense{
-			ID:          expense.ID,
-			Amount:      expense.Amount,
-			Description: expense.Description,
-			Date:        expense.Date,
-			CreateAt:    expense.CreateAt,
-			UpdateAt:    expense.UpdateAt,
+	ctx.JSON(http.StatusOK, lo.Map(expenses, func(expense entity.ExpenseWithSplitUser, _ int) model.ExpenseWithSplitUsers {
+		return model.ExpenseWithSplitUsers{
+			Expense: model.Expense{
+				ID:          expense.ID,
+				Amount:      expense.Amount,
+				Description: expense.Description,
+				Date:        expense.Date,
+				CreateAt:    expense.CreateAt,
+				UpdateAt:    expense.UpdateAt,
+			},
+			SplitUsers: lo.Map(expense.SplitUsers, func(user entity.SplitUser, _ int) model.SplitUser {
+				return model.SplitUser{
+					User: model.User{
+						ID:          user.ID,
+						Username:    user.Username,
+						DisplayName: user.DisplayName,
+						Email:       user.Email,
+						CreateAt:    user.CreateAt,
+						UpdateAt:    user.UpdateAt,
+					},
+					Paid: user.Paid,
+				}
+			}),
 		}
 	}))
 
@@ -269,7 +285,7 @@ func (h *APIHandler) createExpense(ctx *gin.Context) {
 		Currency:    req.Currency,
 		SplitUsers: lo.Map(req.SplitUsers, func(user SplitUser, _ int) entity.SplitUser {
 			return entity.SplitUser{
-				ID:   user.ID,
+				User: entity.User{ID: user.ID},
 				Paid: user.Paid,
 			}
 		}),
@@ -283,6 +299,7 @@ func (h *APIHandler) createExpense(ctx *gin.Context) {
 		ID:          expense.ID,
 		Amount:      expense.Amount,
 		Description: expense.Description,
+		Date:        expense.Date,
 		CreateAt:    expense.CreateAt,
 		UpdateAt:    expense.UpdateAt,
 	})
@@ -294,14 +311,41 @@ func (h *APIHandler) getGroupMembers(ctx *gin.Context) {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
-	ctx.JSON(http.StatusOK, lo.Map(members, func(user entity.User, _ int) model.User {
-		return model.User{
-			ID:          user.ID,
-			Username:    user.Username,
-			DisplayName: user.DisplayName,
-			Email:       user.Email,
-			CreateAt:    user.CreateAt,
-			UpdateAt:    user.UpdateAt,
+	expenses, err := h.db.GetGroupExpenses(ctx.Param("id"))
+	if err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+	ctx.JSON(http.StatusOK, lo.Map(members, func(user entity.User, _ int) model.GroupMember {
+
+		sum := decimal.NewFromFloat(0)
+		for _, expense := range expenses {
+			amount, _ := decimal.NewFromString(expense.Amount)
+			numberOfUsers := decimal.NewFromInt(int64(len(expense.SplitUsers)))
+
+			avg := amount.Div(numberOfUsers)
+			for _, splitUser := range expense.SplitUsers {
+				if splitUser.ID != user.ID {
+					continue
+				}
+				if splitUser.Paid && user.ID == splitUser.ID {
+					sum = sum.Add(avg.Mul(numberOfUsers.Sub(decimal.NewFromInt(1))))
+				} else {
+					sum = sum.Sub(amount.Div(numberOfUsers))
+				}
+			}
+		}
+
+		return model.GroupMember{
+			User: model.User{
+				ID:          user.ID,
+				Username:    user.Username,
+				DisplayName: user.DisplayName,
+				Email:       user.Email,
+				CreateAt:    user.CreateAt,
+				UpdateAt:    user.UpdateAt,
+			},
+			Amount: sum.StringFixed(2),
 		}
 	}))
 }

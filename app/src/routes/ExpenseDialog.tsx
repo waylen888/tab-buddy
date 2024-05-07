@@ -13,6 +13,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import { Currency, User } from "../model";
 import { useEffect } from "react";
 import { useAuth } from "../components/AuthProvider";
+import NumericFormatCustom from "../components/NumericFormat";
 
 interface ExpenseCreateForm {
   description: string;
@@ -91,22 +92,7 @@ export default function ExpenseDialog() {
           <DialogContent dividers>
             <Stack gap={2}>
               <CurrencyField />
-              <Controller
-                name="amount"
-                control={methods.control}
-                defaultValue=""
-                rules={{ required: true }}
-                render={({ field }) => (
-                  <TextField
-                    {...field}
-                    autoFocus
-                    placeholder="0.00"
-                    inputProps={{
-                      inputMode: "decimal",
-                    }}
-                  />
-                )}
-              />
+              <AmountField />
               <Controller
                 name="description"
                 control={methods.control}
@@ -194,6 +180,31 @@ const CurrencyField = () => {
   )
 }
 
+const AmountField = () => {
+  const { control } = useFormContext<ExpenseCreateForm>()
+
+  return (
+    <Controller
+      name="amount"
+      control={control}
+      defaultValue=""
+      rules={{ required: true }}
+      render={({ field }) => (
+        <TextField
+          {...field}
+          placeholder="0.00"
+          InputProps={{
+            inputComponent: NumericFormatCustom as any,
+          }}
+          inputProps={{
+            inputMode: "decimal",
+          }}
+        />
+      )}
+    />
+  )
+}
+
 
 const PaymentOptions: React.FC<{
   groupId: string
@@ -237,9 +248,9 @@ const PaymentOptions: React.FC<{
                 )}
               />
             </TableCell>
-            <TableCell padding="checkbox">
+            {/* <TableCell padding="checkbox">
               Paid?
-            </TableCell>
+            </TableCell> */}
           </TableRow>
         </TableHead>
         <TableBody>
@@ -261,13 +272,13 @@ const PaymentOptions: React.FC<{
                       : 0
                     } />
                 </TableCell>
-                <TableCell padding="checkbox">
+                {/* <TableCell padding="checkbox">
                   <Controller
                     name={`splitUsers.${index}.paid`}
                     control={control}
                     render={({ field }) => <Checkbox {...field} checked={field.value} />}
                   />
-                </TableCell>
+                </TableCell> */}
               </TableRow>
             ))
           }

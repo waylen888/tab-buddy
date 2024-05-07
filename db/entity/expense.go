@@ -19,7 +19,6 @@ type ExpenseWithSplitUser struct {
 
 type SplitUser struct {
 	User
-	ID   string
 	Paid bool
 }
 

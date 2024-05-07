@@ -28,3 +28,8 @@ type SplitUser struct {
 	User
 	Paid bool `json:"paid"`
 }
+
+type GroupMember struct {
+	User
+	Amount string `json:"amount"`
+}

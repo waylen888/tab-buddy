@@ -17,7 +17,7 @@ type Database interface {
 	GetGroupMembers(ID string) ([]entity.User, error)
 	AddUserToGroupByUsername(groupID string, username string) error
 
-	GetGroupExpenses(groupID string) ([]entity.Expense, error)
+	GetGroupExpenses(groupID string) ([]entity.ExpenseWithSplitUser, error)
 	GetExpense(ID string) (entity.ExpenseWithSplitUser, error)
 	CreateExpense(arg entity.CreateExpenseArguments) (entity.Expense, error)
 

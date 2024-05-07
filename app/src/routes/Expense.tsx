@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom"
 import { authFetch } from "../hooks/api"
 import { ExpenseWithSplitUsers } from "../model"
 import { CircularProgress, Typography } from "@mui/material"
+import dayjs from "dayjs"
 
 const Expense = () => {
   const { id } = useParams<{ id: string }>()
@@ -22,7 +23,7 @@ const Expense = () => {
       <h3>{data?.description}</h3>
       <h2>{data?.amount}</h2>
       <Typography>
-        Added by {data?.createdBy?.displayName}
+        Added by {data?.createdBy?.displayName} on {dayjs(data?.createAt).format("YYYY/MM/DD")}
       </Typography>
       {JSON.stringify(data)}
     </div>

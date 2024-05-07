@@ -3,13 +3,13 @@ import { useQuery } from "@tanstack/react-query"
 import { authFetch } from "../hooks/api"
 import { Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from "@mui/material"
 import { Link } from "react-router-dom"
-import { Expense } from "../model"
+import { Expense, ExpenseWithSplitUsers } from "../model"
 import dayjs from "dayjs"
 
 const GroupExpenses: React.FC<{ groupId: string }> = ({ groupId }) => {
   const { data } = useQuery({
     queryKey: ['group', groupId, 'expenses'],
-    queryFn: () => authFetch<Expense[]>(`/api/group/${groupId}/expenses`)
+    queryFn: () => authFetch<ExpenseWithSplitUsers[]>(`/api/group/${groupId}/expenses`)
   })
 
   const catdata = data?.reduce((pv, expense, index, data) => {
@@ -26,7 +26,7 @@ const GroupExpenses: React.FC<{ groupId: string }> = ({ groupId }) => {
     return pv
   }, [] as {
     date: string,
-    values: Expense[]
+    values: ExpenseWithSplitUsers[]
   }[])
 
   return (
@@ -59,9 +59,13 @@ const GroupExpenses: React.FC<{ groupId: string }> = ({ groupId }) => {
                   {cat.values.map((expense) => (
                     <TableRow key={expense.id}>
                       <TableCell>
-                        <Link to={`/expense/${expense.id}`}>
-                          {expense.description}
-                        </Link>
+                        <Stack>
+                          <Link to={`/expense/${expense.id}`}>
+                            {expense.description}
+                          </Link>
+                          {expense.splitUsers.find(user => user.paid)?.displayName} paid {expense.amount}
+                        </Stack>
+
                       </TableCell>
                       <TableCell>
                         {expense.amount}

@@ -15,7 +15,11 @@ export interface Expense {
   createdBy: User
 }
 export interface ExpenseWithSplitUsers extends Expense {
-  splitUsers: User[]
+  splitUsers: SplitUser[]
+}
+
+export interface SplitUser extends User {
+  paid: boolean
 }
 
 export interface User {
