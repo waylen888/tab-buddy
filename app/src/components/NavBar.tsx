@@ -1,52 +1,66 @@
-import { Box } from '@mui/joy';
-import Typography from '@mui/joy/Typography';
+import { AppBar, Box, Button, Drawer, IconButton, List, ListItem, ListItemButton, ListItemText, Toolbar, Typography } from '@mui/material';
+import MenuIcon from '@mui/icons-material/Menu';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
-// import ColorSchemeToggle from './ColorSchemeToggle';
+export default function NavBar() {
+  const [open, setOpen] = useState(false)
+  const toggleDrawer = (newOpen: boolean) => () => {
+    setOpen(newOpen);
+  };
+  const navigate = useNavigate();
 
-export default function HeaderSection() {
-  return (
-    <Box
-      sx={{
-        display: 'flex',
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        width: '100%',
-        top: 0,
-        px: 1.5,
-        py: 1,
-        zIndex: 10000,
-        backgroundColor: 'background.body',
-        borderBottom: '1px solid',
-        borderColor: 'divider',
-        position: 'sticky',
-      }}
-    >
-      <Box
-        sx={{
-          display: 'flex',
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: 1.5,
-        }}
-      >
-        <Typography component="h1" fontWeight="xl">
- TAB BUDDY
-        </Typography>
-      </Box>
+  const DrawerList = (
+    <Box sx={{ width: 250 }} role="presentation" onClick={toggleDrawer(false)}>
+      <List>
+        {['Groups'].map((text) => (
+          <ListItem key={text} disablePadding>
+            <ListItemButton onClick={() => {
+              navigate(text.toLowerCase())
+            }}>
+              <ListItemText primary={text} />
+            </ListItemButton>
+          </ListItem>
+        ))}
+      </List>
 
-      <Box sx={{ display: 'flex', flexDirection: 'row', gap: 3 }}>
-        <Box
-          sx={{
-            gap: 1,
-            alignItems: 'center',
-            display: { xs: 'none', sm: 'flex' },
-          }}
-        >
-          
-        </Box>
-        {/* <ColorSchemeToggle sx={{ alignSelf: 'center' }} /> */}
-      </Box>
     </Box>
   );
+
+
+
+  return (
+    <>
+      <Drawer open={open} onClose={toggleDrawer(false)}>
+        {DrawerList}
+      </Drawer>
+
+      <AppBar position="static">
+        <Toolbar>
+          <IconButton
+            size="large"
+            edge="start"
+            color="inherit"
+            aria-label="menu"
+            sx={{ mr: 2 }}
+            onClick={toggleDrawer(true)}
+          >
+            <MenuIcon />
+          </IconButton>
+          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+            TAB BUDDY
+          </Typography>
+          <Button color="inherit"
+            onClick={() => {
+              localStorage.removeItem('access_token')
+              navigate('/login')
+            }}
+          >
+            登出
+          </Button>
+        </Toolbar>
+      </AppBar>
+    </>
+  );
 }
+

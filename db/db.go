@@ -1,16 +1,26 @@
 package db
 
-import "github.com/waylen888/tab-buddy/db/entity"
+import (
+	"github.com/waylen888/tab-buddy/db/entity"
+)
 
 type Database interface {
-	GetGroups() ([]entity.Group, error)
-	GetGroup(ID string) (entity.Group, error)
-	CreateGroup(name string) (entity.Group, error)
+	GetUser(ID string) (entity.User, error)
+	GetUserByUsername(username string) (entity.User, error)
+	CreateUser(username, displayName, email, password string) (entity.User, error)
+
+	GetGroups(userID string) ([]entity.Group, error)
+	GetGroup(ID string, userID string) (entity.Group, error)
+	CreateGroup(name string, ownerID string) (entity.Group, error)
 	UpdateGroup(ID string, name string) (entity.Group, error)
 	DeleteGroup(ID string) error
+	GetGroupMembers(ID string) ([]entity.User, error)
+	AddUserToGroupByUsername(groupID string, username string) error
 
-	GetExpenses(groupID string) ([]entity.Expense, error)
-	CreateExpense(groupID string, amount string, description string) (entity.Expense, error)
+	GetGroupExpenses(groupID string) ([]entity.Expense, error)
+	GetExpense(ID string) (entity.ExpenseWithSplitUser, error)
+	CreateExpense(arg entity.CreateExpenseArguments) (entity.Expense, error)
 
+	GetCurrencies() ([]entity.Currency, error)
 	Close() error
 }
