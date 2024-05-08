@@ -18,8 +18,16 @@ export interface ExpenseWithSplitUsers extends Expense {
   splitUsers: SplitUser[]
 }
 
+export interface GroupExpense extends Expense {
+  sum: string;
+  currency: Currency;
+  splitUsers: SplitUser[];
+}
+
 export interface SplitUser extends User {
-  paid: boolean
+  paid: boolean;
+  owed: boolean;
+  amount: string;
 }
 
 export interface User {

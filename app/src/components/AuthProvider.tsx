@@ -35,6 +35,7 @@ const AuthProvider: React.FC<{
   }
 
   if (error || !data?.user) {
+    localStorage.removeItem("access_token")
     return (
       <Navigate to="/login" />
     )

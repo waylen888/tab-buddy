@@ -3,13 +3,14 @@ package entity
 import "time"
 
 type Expense struct {
-	ID          string
-	Description string
-	Amount      string
-	Date        time.Time
-	CreateAt    time.Time
-	UpdateAt    time.Time
-	CreatedBy   string
+	ID           string    `db:"id"`
+	Amount       string    `db:"amount"`
+	Description  string    `db:"description"`
+	Date         time.Time `db:"date"`
+	CurrencyCode string    `db:"currency_code"`
+	CreateAt     time.Time `db:"create_at"`
+	UpdateAt     time.Time `db:"update_at"`
+	CreatedBy    string    `db:"created_by"`
 }
 
 type ExpenseWithSplitUser struct {
@@ -19,7 +20,9 @@ type ExpenseWithSplitUser struct {
 
 type SplitUser struct {
 	User
-	Paid bool
+	Owed   bool
+	Paid   bool
+	Amount string
 }
 
 type CreateExpenseArguments struct {
@@ -27,7 +30,7 @@ type CreateExpenseArguments struct {
 	Amount         string
 	Description    string
 	Date           time.Time
-	Currency       string
+	CurrencyCode   string
 	SplitUsers     []SplitUser
 	CreateByUserID string
 }

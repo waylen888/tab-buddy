@@ -16,6 +16,7 @@ import GroupDialog from './routes/GroupDialog';
 import { ThemeProvider, createTheme } from '@mui/material';
 import InviteDialog from './routes/InviteDialog';
 import Expense from './routes/Expense';
+import GroupSetting from './routes/GroupSetting';
 
 
 const router = createBrowserRouter([
@@ -46,10 +47,16 @@ const router = createBrowserRouter([
             path: "create/expense",
             element: <ExpenseDialog />
           },
+        ],
+      },
+      {
+        path: "group/:id/setting",
+        element: <GroupSetting />,
+        children: [
           {
             path: "invite",
             element: <InviteDialog />
-          }
+          },
         ],
       },
       {

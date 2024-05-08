@@ -1,4 +1,4 @@
-import { Autocomplete, Checkbox, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, MenuItem, Select, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField } from "@mui/material";
+import { Autocomplete, Checkbox, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, MenuItem, Select, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, useMediaQuery, useTheme } from "@mui/material";
 import { Controller, FormProvider, useForm, useFormContext } from "react-hook-form";
 import { useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -25,7 +25,7 @@ interface ExpenseCreateForm {
 }
 
 interface SplitUser extends User {
-  include: boolean;
+  owed: boolean;
   paid: boolean;
 }
 
@@ -44,8 +44,8 @@ export default function ExpenseDialog() {
           description: values.description,
           amount: values.amount,
           date: values.date,
-          currency: values.currency.code,
-          splitUsers: values.splitUsers.filter(user => user.include),
+          currencyCode: values.currency.code,
+          splitUsers: values.splitUsers,
         })
       })
     },
@@ -70,8 +70,13 @@ export default function ExpenseDialog() {
   const handleClose = () => {
     navigate(-1)
   }
+
+  const theme = useTheme()
+  const fullScreen = useMediaQuery(theme.breakpoints.down('md'));
+
   return (
-    <Dialog open fullScreen>
+
+    <Dialog open fullScreen={fullScreen}>
       <DialogTitle>
         Expense
       </DialogTitle>
@@ -87,8 +92,10 @@ export default function ExpenseDialog() {
       >
         <CloseIcon />
       </IconButton>
+
       <FormProvider {...methods}>
-        <form onSubmit={methods.handleSubmit(handleSubmit)}>
+        <form onSubmit={methods.handleSubmit(handleSubmit)} style={{ display: "contents" }}>
+
           <DialogContent dividers>
             <Stack gap={2}>
               <CurrencyField />
@@ -131,10 +138,9 @@ export default function ExpenseDialog() {
               Create
             </LoadingButton>
           </DialogActions>
-
         </form>
-      </FormProvider>
-    </Dialog >
+      </FormProvider >
+    </Dialog>
   )
 }
 
@@ -219,7 +225,7 @@ const PaymentOptions: React.FC<{
     if (data) {
       const splitUsers = data.map((user) => ({
         ...user,
-        include: true,
+        owed: true,
         paid: user.id === me.id
       }))
       console.debug(`splitUsers`, splitUsers)
@@ -248,9 +254,9 @@ const PaymentOptions: React.FC<{
                 )}
               />
             </TableCell>
-            {/* <TableCell padding="checkbox">
+            <TableCell padding="checkbox">
               Paid?
-            </TableCell> */}
+            </TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -259,26 +265,27 @@ const PaymentOptions: React.FC<{
               <TableRow key={user.id}>
                 <TableCell padding="checkbox">
                   <Controller
-                    name={`splitUsers.${index}.include`}
+                    name={`splitUsers.${index}.owed`}
                     control={control}
+                    defaultValue={true}
                     render={({ field }) => <Checkbox {...field} checked={field.value} />}
                   />
                 </TableCell>
                 <TableCell>{user.displayName}</TableCell>
                 <TableCell>
                   <Amount
-                    value={user.include
-                      ? amount / array.filter(user => user.include).length
+                    value={user.owed
+                      ? amount / array.filter(user => user.owed).length
                       : 0
                     } />
                 </TableCell>
-                {/* <TableCell padding="checkbox">
+                <TableCell padding="checkbox">
                   <Controller
                     name={`splitUsers.${index}.paid`}
                     control={control}
                     render={({ field }) => <Checkbox {...field} checked={field.value} />}
                   />
-                </TableCell> */}
+                </TableCell>
               </TableRow>
             ))
           }

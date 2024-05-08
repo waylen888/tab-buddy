@@ -41,8 +41,9 @@ const QueryClientProvider: React.FC<{
         )}
         onError={logErrorToService}
       >
-        <ReactQueryDevtools />
+
         {children}
+        {/* <ReactQueryDevtools buttonPosition="relative" /> */}
       </ErrorBoundary>
     </_QueryClientProvider>
   );

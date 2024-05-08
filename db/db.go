@@ -21,6 +21,8 @@ type Database interface {
 	GetExpense(ID string) (entity.ExpenseWithSplitUser, error)
 	CreateExpense(arg entity.CreateExpenseArguments) (entity.Expense, error)
 
+	GetCurrency(code string) (entity.Currency, error)
 	GetCurrencies() ([]entity.Currency, error)
+
 	Close() error
 }

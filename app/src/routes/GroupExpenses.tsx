@@ -1,20 +1,23 @@
 import { Fragment, ReactNode } from "react"
-import { useQuery } from "@tanstack/react-query"
-import { authFetch } from "../hooks/api"
-import { Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from "@mui/material"
-import { Link } from "react-router-dom"
-import { Expense, ExpenseWithSplitUsers } from "../model"
+import { Box, Fab, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, tableCellClasses } from "@mui/material"
+import { useNavigate } from "react-router-dom"
+import { GroupExpense, User } from "../model"
 import dayjs from "dayjs"
+import AddIcon from '@mui/icons-material/Add';
+import { useAuth } from "../components/AuthProvider"
 
-const GroupExpenses: React.FC<{ groupId: string }> = ({ groupId }) => {
-  const { data } = useQuery({
-    queryKey: ['group', groupId, 'expenses'],
-    queryFn: () => authFetch<ExpenseWithSplitUsers[]>(`/api/group/${groupId}/expenses`)
-  })
 
+const GroupExpenses: React.FC<{
+  data: GroupExpense[] | undefined;
+  onRefetchRequest?: () => void
+}> = ({ data, onRefetchRequest = () => { } }) => {
+
+  const { user: me } = useAuth()
+  const navigate = useNavigate();
   const catdata = data?.reduce((pv, expense, index, data) => {
     const date = dayjs(expense.date).format("YYYY/MM/DD");
-    const prevDate = dayjs(data[index - 1]?.date).format("YYYYMMDD");
+    const prevDate = dayjs(data[index - 1]?.date).format("YYYY/MM/DD");
+
     if (date !== prevDate || pv.length === 0) {
       pv.push({
         date: date,
@@ -26,15 +29,15 @@ const GroupExpenses: React.FC<{ groupId: string }> = ({ groupId }) => {
     return pv
   }, [] as {
     date: string,
-    values: ExpenseWithSplitUsers[]
+    values: GroupExpense[]
   }[])
 
+  const handleAdd = () => {
+    navigate(`create/expense`)
+  }
+
   return (
-    <Stack>
-      <h2>Expenses</h2>
-      <Link to={`create/expense`}>
-        Create Expense
-      </Link>
+    <Stack gap={1}>
       <TableContainer>
         <Table stickyHeader size="small">
           {
@@ -44,7 +47,13 @@ const GroupExpenses: React.FC<{ groupId: string }> = ({ groupId }) => {
 
               nodes.push(
                 <TableHead key={`head-${cat.date}-${index}`}>
-                  <TableRow>
+                  <TableRow sx={{
+                    [`.${tableCellClasses.root}`]: {
+                      backgroundColor: (theme) => theme.palette.primary.main,
+                      color: (theme) => theme.palette.getContrastText(theme.palette.primary.main),
+                      fontWeight: "bold",
+                    }
+                  }}>
                     <TableCell>
                       {cat.date}
                     </TableCell>
@@ -57,18 +66,32 @@ const GroupExpenses: React.FC<{ groupId: string }> = ({ groupId }) => {
               nodes.push(
                 <TableBody key={`body-${cat.date}-${index}`}>
                   {cat.values.map((expense) => (
-                    <TableRow key={expense.id}>
+                    <TableRow
+                      key={expense.id}
+                      sx={{ cursor: "pointer" }}
+                      onClick={() => {
+                        navigate(`/expense/${expense.id}`)
+                      }}
+                      hover
+                    >
                       <TableCell>
                         <Stack>
-                          <Link to={`/expense/${expense.id}`}>
+                          <Typography>
                             {expense.description}
-                          </Link>
-                          {expense.splitUsers.find(user => user.paid)?.displayName} paid {expense.amount}
+                          </Typography>
+                          <Typography variant="subtitle2">
+                            <YouOrDisplayName user={expense.splitUsers.find(user => user.paid)} />
+                            <span> paid </span>
+                            {expense.currency.symbol}{expense.amount}
+                          </Typography>
                         </Stack>
 
                       </TableCell>
                       <TableCell>
-                        {expense.amount}
+                        <Amount
+                          symbol={expense.currency.symbol}
+                          value={expense.splitUsers.find((user) => user.id === me.id)?.amount ?? ''}
+                        />
                       </TableCell>
                     </TableRow>
                   ))}
@@ -83,8 +106,47 @@ const GroupExpenses: React.FC<{ groupId: string }> = ({ groupId }) => {
           }
         </Table>
       </TableContainer>
-    </Stack>
+
+      <Box
+        sx={{ height: "70px", /* for Fab padding */ }}
+      >
+        <Fab
+          color="primary"
+          onClick={handleAdd}
+          sx={{
+            position: 'fixed',
+            bottom: 16,
+            right: 16,
+          }}>
+          <AddIcon />
+        </Fab>
+      </Box>
+    </Stack >
   )
 }
 
 export default GroupExpenses
+
+const YouOrDisplayName: React.FC<{
+  user: User | undefined
+}> = ({ user }) => {
+  const { user: me } = useAuth()
+  return (
+    <span>
+      {
+        user?.id === me.id ? "YOU" : user?.displayName
+      }
+    </span>
+  )
+}
+
+const Amount: React.FC<{
+  symbol: string;
+  value: string;
+}> = ({ symbol, value }) => {
+  return value.startsWith("-") ? (
+    <span style={{ color: "orange" }}>{symbol}{value}</span>
+  ) : (
+    <span style={{ color: "green" }}>{symbol}{value}</span>
+  )
+}

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"log/slog"
 	"os"
 
@@ -10,9 +11,14 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
+var (
+	databasePath = flag.String("database-path", "./tabbuddy.sqlite", "database path")
+)
+
 func main() {
-	slog.Info("start tabbuddy")
-	db, err := sqlite.New(context.TODO(), "./debug-data/tabbuddy.sqlite")
+	flag.Parse()
+	slog.Info("start tabbuddy", "database-path", *databasePath)
+	db, err := sqlite.New(context.TODO(), *databasePath)
 	if err != nil {
 		slog.Error("open sqlite", "error", err)
 		os.Exit(1)

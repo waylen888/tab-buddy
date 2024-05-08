@@ -10,6 +10,7 @@ import (
 	"github.com/georgysavva/scany/v2/sqlscan"
 	"github.com/mattn/go-sqlite3"
 	"github.com/rs/xid"
+	"github.com/waylen888/tab-buddy/calc"
 	"github.com/waylen888/tab-buddy/db"
 	"github.com/waylen888/tab-buddy/db/entity"
 )
@@ -116,7 +117,7 @@ func (s *sqlite) GetGroupExpenses(groupID string) ([]entity.ExpenseWithSplitUser
 
 	if err := sqlscan.Select(
 		ctx, s.rwDB, &expenses,
-		`SELECT id, amount, description, date, create_at, update_at 
+		`SELECT id, amount, description, date, currency_code, create_at, update_at, created_by
 		FROM expense 
 		JOIN group_expense 
 			ON expense.id = group_expense.expense_id 
@@ -132,7 +133,7 @@ func (s *sqlite) GetGroupExpenses(groupID string) ([]entity.ExpenseWithSplitUser
 		expense := &expenses[i]
 		err := sqlscan.Select(
 			ctx, s.rwDB, &expense.SplitUsers,
-			`SELECT id, username, display_name, email, create_at, update_at, paid
+			`SELECT id, username, display_name, email, create_at, update_at, paid, owed, amount
 			FROM user JOIN user_expense
 			ON user.id = user_expense.user_id 
 			WHERE user_expense.expense_id = @id`,
@@ -162,7 +163,7 @@ func (s *sqlite) GetExpense(ID string) (entity.ExpenseWithSplitUser, error) {
 	}
 	err := sqlscan.Select(
 		ctx, s.rwDB, &expense.SplitUsers,
-		`SELECT id, username, display_name, email, create_at, update_at, paid
+		`SELECT id, username, display_name, email, create_at, update_at, paid, owed
 		FROM user JOIN user_expense
 		ON user.id = user_expense.user_id 
 		WHERE user_expense.expense_id = @id`,
@@ -188,13 +189,13 @@ func (s *sqlite) CreateExpense(args entity.CreateExpenseArguments) (entity.Expen
 
 	_, err = tx.ExecContext(
 		ctx,
-		`INSERT INTO expense (id, amount, description, date, currency, create_at, update_at, created_by) 
-		VALUES (@id, @amount, @description, @date, @currency, @create_at, @update_at, @created_by)`,
+		`INSERT INTO expense (id, amount, description, date, currency_code, create_at, update_at, created_by) 
+		VALUES (@id, @amount, @description, @date, @currency_code, @create_at, @update_at, @created_by)`,
 		sql.Named("id", expense.ID),
 		sql.Named("amount", expense.Amount),
 		sql.Named("description", expense.Description),
 		sql.Named("date", args.Date),
-		sql.Named("currency", args.Currency),
+		sql.Named("currency_code", args.CurrencyCode),
 		sql.Named("create_at", expense.CreateAt),
 		sql.Named("update_at", expense.UpdateAt),
 		sql.Named("created_by", args.CreateByUserID),
@@ -213,13 +214,14 @@ func (s *sqlite) CreateExpense(args entity.CreateExpenseArguments) (entity.Expen
 	for _, user := range args.SplitUsers {
 		_, err = tx.ExecContext(
 			ctx,
-			`INSERT INTO user_expense(user_id, expense_id, type, value, paid) 
-			VALUES (@user_id, @expense_id, @type, @value, @paid)`,
+			`INSERT INTO user_expense(user_id, expense_id, type, amount, paid, owed) 
+			VALUES (@user_id, @expense_id, @type, @amount, @paid, @owed)`,
 			sql.Named("user_id", user.ID),
 			sql.Named("expense_id", expense.ID),
 			sql.Named("type", 0),
-			sql.Named("value", ""),
+			sql.Named("amount", calc.SplitValue(expense.Amount, args.SplitUsers, user.ID)),
 			sql.Named("paid", user.Paid),
+			sql.Named("owed", user.Owed),
 		)
 		if err != nil {
 			return expense, err

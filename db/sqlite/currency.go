@@ -9,6 +9,17 @@ import (
 	"github.com/waylen888/tab-buddy/db/entity"
 )
 
+func (s *sqlite) GetCurrency(code string) (entity.Currency, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), s.timeout)
+	defer cancel()
+	var c entity.Currency
+	return c, sqlscan.Get(
+		ctx, s.rwDB, &c,
+		`SELECT * FROM "currency" WHERE code = @code`,
+		sql.Named("code", code),
+	)
+}
+
 func (s *sqlite) GetCurrencies() ([]entity.Currency, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), s.timeout)
 	defer cancel()

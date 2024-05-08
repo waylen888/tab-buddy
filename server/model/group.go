@@ -24,9 +24,18 @@ type ExpenseWithSplitUsers struct {
 	SplitUsers []SplitUser `json:"splitUsers"`
 }
 
+type GroupExpense struct {
+	Expense
+	Currency   Currency    `json:"currency"`
+	Sum        string      `json:"sum"`
+	SplitUsers []SplitUser `json:"splitUsers"`
+}
+
 type SplitUser struct {
 	User
-	Paid bool `json:"paid"`
+	Paid   bool   `json:"paid"`
+	Owed   bool   `json:"owed"`
+	Amount string `json:"amount"`
 }
 
 type GroupMember struct {

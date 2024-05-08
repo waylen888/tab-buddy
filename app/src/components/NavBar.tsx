@@ -56,7 +56,7 @@ export default function NavBar() {
               navigate('/login')
             }}
           >
-            登出
+            Logout
           </Button>
         </Toolbar>
       </AppBar>

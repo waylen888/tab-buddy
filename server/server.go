@@ -27,6 +27,7 @@ func (s *Server) Run(ctx context.Context, port string) error {
 			c.Writer.Header().Set("ngrok-skip-browser-warning", "1")
 		}
 	}())
+	engine.NoRoute(s.handler.noRoute)
 
 	engine.POST("/api/auth/login", s.handler.login)
 	engine.GET("/api/auth/refresh_token", jwtTokenCheck(s.handler.db), s.handler.refreshToken)

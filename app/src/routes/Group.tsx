@@ -1,11 +1,12 @@
 
-import { Group, User } from "../model"
-import { Link, Outlet, useParams } from "react-router-dom"
+import { Group, GroupExpense, User } from "../model"
+import { Link, Outlet, useNavigate, useParams } from "react-router-dom"
 import { useQuery } from "@tanstack/react-query"
 import { authFetch } from "../hooks/api"
-import { Stack } from "@mui/material";
+import { Box, IconButton, Stack, Typography } from "@mui/material";
 import GroupExpenses from "./GroupExpenses";
-
+import GroupDebt from "./GroupDebt";
+import SettingsIcon from '@mui/icons-material/Settings';
 
 
 export default function GroupRoute() {
@@ -15,36 +16,31 @@ export default function GroupRoute() {
     queryFn: () => authFetch<Group>(`/api/group/${id}`)
   })
 
+  const { refetch: refetchGroupExpenses, data: groupExpenses } = useQuery({
+    queryKey: ['group', id, 'expenses'],
+    queryFn: () => authFetch<GroupExpense[]>(`/api/group/${id}/expenses`)
+  })
+  const navigate = useNavigate()
+
   return (
     <div>
-      <h1>Group {data?.name}</h1>
-      <p>{data?.createAt}</p>
-      <p>{data?.updateAt}</p>
+      <Box sx={{ p: 2 }}>
+        <Stack direction="row" alignItems="baseline" gap={1} display="flex" justifyContent="space-between">
+          <Typography variant="h4">{data?.name}</Typography>
+          <IconButton onClick={() => navigate("setting")}>
+            <SettingsIcon />
+          </IconButton>
+        </Stack>
+        <GroupDebt expenses={groupExpenses} />
+      </Box>
+      <GroupExpenses
+        data={groupExpenses}
+        onRefetchRequest={() => refetchGroupExpenses()}
+      />
 
-      {id ? <UserList groupId={id} /> : null}
-      {id ? <GroupExpenses groupId={id} /> : null}
       <Outlet />
     </div>
   )
 }
 
 
-const UserList: React.FC<{ groupId: string }> = ({ groupId }) => {
-  const { data } = useQuery({
-    queryKey: ['group', groupId, 'members'],
-    queryFn: () => authFetch<User[]>(`/api/group/${groupId}/members`)
-  })
-  return (
-    <Stack>
-      <h2>Users</h2>
-      <Link to={`invite`}>
-        Invite Friend
-      </Link>
-      {
-        data?.map((user, index) => (
-          <div key={user.id}>{index + 1} - {user.displayName}</div>
-        ))
-      }
-    </Stack>
-  )
-}

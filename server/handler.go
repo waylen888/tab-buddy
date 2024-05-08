@@ -1,16 +1,22 @@
 package server
 
 import (
+	"crypto/md5"
 	"database/sql"
 	"errors"
 	"fmt"
+	"mime"
 	"net/http"
+	"path"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/samber/lo"
 	"github.com/shopspring/decimal"
+	"github.com/waylen888/tab-buddy/app"
+	"github.com/waylen888/tab-buddy/calc"
 	"github.com/waylen888/tab-buddy/db"
 	"github.com/waylen888/tab-buddy/db/entity"
 	"github.com/waylen888/tab-buddy/server/model"
@@ -225,8 +231,10 @@ func (h *APIHandler) getGroupExpenses(ctx *gin.Context) {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
-	ctx.JSON(http.StatusOK, lo.Map(expenses, func(expense entity.ExpenseWithSplitUser, _ int) model.ExpenseWithSplitUsers {
-		return model.ExpenseWithSplitUsers{
+
+	ctx.JSON(http.StatusOK, lo.Map(expenses, func(expense entity.ExpenseWithSplitUser, _ int) model.GroupExpense {
+		currency, _ := h.db.GetCurrency(expense.CurrencyCode)
+		return model.GroupExpense{
 			Expense: model.Expense{
 				ID:          expense.ID,
 				Amount:      expense.Amount,
@@ -235,6 +243,9 @@ func (h *APIHandler) getGroupExpenses(ctx *gin.Context) {
 				CreateAt:    expense.CreateAt,
 				UpdateAt:    expense.UpdateAt,
 			},
+			Currency: model.Currency(currency),
+			Sum: calc.SplitValue(expense.Amount, expense.SplitUsers, GetUser(ctx).ID).
+				StringFixed(int32(currency.DecimalDigits)),
 			SplitUsers: lo.Map(expense.SplitUsers, func(user entity.SplitUser, _ int) model.SplitUser {
 				return model.SplitUser{
 					User: model.User{
@@ -245,7 +256,9 @@ func (h *APIHandler) getGroupExpenses(ctx *gin.Context) {
 						CreateAt:    user.CreateAt,
 						UpdateAt:    user.UpdateAt,
 					},
-					Paid: user.Paid,
+					Paid:   user.Paid,
+					Owed:   user.Owed,
+					Amount: user.Amount,
 				}
 			}),
 		}
@@ -257,36 +270,41 @@ func (h *APIHandler) createExpense(ctx *gin.Context) {
 	type SplitUser struct {
 		ID   string `json:"id"`
 		Paid bool   `json:"paid"`
+		Owed bool   `json:"owed"`
 	}
 	var req struct {
-		Amount      string      `json:"amount" binding:"required"`
-		Description string      `json:"description" binding:"required"`
-		Date        time.Time   `json:"date" binding:"required"`
-		Currency    string      `json:"currency" binding:"required"`
-		SplitUsers  []SplitUser `json:"splitUsers" binding:"required,gt=0"`
+		Amount       string      `json:"amount" binding:"required"`
+		Description  string      `json:"description" binding:"required"`
+		Date         time.Time   `json:"date" binding:"required"`
+		CurrencyCode string      `json:"currencyCode" binding:"required"`
+		SplitUsers   []SplitUser `json:"splitUsers" binding:"required,gt=0"`
 	}
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
-	if !lo.SomeBy(req.SplitUsers, func(user SplitUser) bool {
+	if paidCount := lo.CountBy(req.SplitUsers, func(user SplitUser) bool {
 		return user.Paid
-	}) {
+	}); paidCount == 0 {
 		ctx.AbortWithError(http.StatusBadRequest, fmt.Errorf("no one paid"))
+		return
+	} else if paidCount > 1 {
+		ctx.AbortWithError(http.StatusBadRequest, fmt.Errorf("more than one paid"))
 		return
 	}
 
 	expense, err := h.db.CreateExpense(entity.CreateExpenseArguments{
-		GroupID:     ctx.Param("id"),
-		Amount:      req.Amount,
-		Description: req.Description,
-		Date:        req.Date,
-		Currency:    req.Currency,
+		GroupID:      ctx.Param("id"),
+		Amount:       req.Amount,
+		Description:  req.Description,
+		Date:         req.Date,
+		CurrencyCode: req.CurrencyCode,
 		SplitUsers: lo.Map(req.SplitUsers, func(user SplitUser, _ int) entity.SplitUser {
 			return entity.SplitUser{
 				User: entity.User{ID: user.ID},
 				Paid: user.Paid,
+				Owed: user.Owed,
 			}
 		}),
 		CreateByUserID: GetUser(ctx).ID,
@@ -320,20 +338,7 @@ func (h *APIHandler) getGroupMembers(ctx *gin.Context) {
 
 		sum := decimal.NewFromFloat(0)
 		for _, expense := range expenses {
-			amount, _ := decimal.NewFromString(expense.Amount)
-			numberOfUsers := decimal.NewFromInt(int64(len(expense.SplitUsers)))
-
-			avg := amount.Div(numberOfUsers)
-			for _, splitUser := range expense.SplitUsers {
-				if splitUser.ID != user.ID {
-					continue
-				}
-				if splitUser.Paid && user.ID == splitUser.ID {
-					sum = sum.Add(avg.Mul(numberOfUsers.Sub(decimal.NewFromInt(1))))
-				} else {
-					sum = sum.Sub(amount.Div(numberOfUsers))
-				}
-			}
+			sum = calc.SplitValue(expense.Amount, expense.SplitUsers, user.ID)
 		}
 
 		return model.GroupMember{
@@ -436,4 +441,45 @@ func (h *APIHandler) getCurrencies(ctx *gin.Context) {
 			Rounding:      currency.Rounding,
 		}
 	}))
+}
+
+func (h *APIHandler) noRoute(ctx *gin.Context) {
+
+	dir, file := path.Split(ctx.Request.RequestURI)
+	if strings.HasPrefix(dir, "/api") {
+		ctx.AbortWithStatus(http.StatusNotFound)
+		return
+	}
+
+	file = strings.Split(file, "?")[0]
+	ext := path.Ext(file)
+	ctx.Header("Cache-Control", "no-cache")
+
+	var uri string
+	if file == "" || ext == "" {
+		uri = path.Join("dist", "index.html")
+	} else {
+		uri = path.Join("dist", dir, file)
+	}
+
+	data, err := app.FS.ReadFile(uri)
+	if err != nil {
+		ctx.AbortWithError(http.StatusNotFound, err)
+		return
+	}
+
+	etag := fmt.Sprintf("%x", md5.Sum(data))
+	ctx.Header("ETag", etag)
+	if match := ctx.GetHeader("If-None-Match"); match != "" {
+		if strings.Contains(match, etag) {
+			ctx.Status(http.StatusNotModified)
+			return
+		}
+	}
+
+	ctype := mime.TypeByExtension(path.Ext(uri))
+	if ctype == "" {
+		ctype = http.DetectContentType(data)
+	}
+	ctx.Data(http.StatusOK, ctype, data)
 }
