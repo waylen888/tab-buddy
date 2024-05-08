@@ -1,0 +1,9 @@
+@host = http://localhost:8080
+POST {{host}}/api/user HTTP/1.1
+
+{
+"username":"aaa",
+"password":"aaa",
+"displayName":"路人A",
+"email":"waylen888@gmail.com"
+}

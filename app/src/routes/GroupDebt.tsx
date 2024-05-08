@@ -21,6 +21,9 @@ const GroupDebt: React.FC<{
         }
       }
       pv.debtor[cv.username].amount += Number(cv.amount)
+      if (cv.paid) {
+        pv.debtor[cv.username].user = cv
+      }
       return pv
     }, pv[cv.currency.code])
     return pv
@@ -41,13 +44,13 @@ const GroupDebt: React.FC<{
     const debtors = debt.debtor
     for (const kk in debtors) {
       const debtor = debtors[kk]
-      if (debtor.amount < 0) {
-        row.push({
-          currency: debt.currency,
-          name: debtor.user.displayName,
-          amount: Math.abs(debtor.amount).toFixed(debt.currency.decimalDigits),
-        })
-      }
+      // if (debtor.amount < 0) {
+      row.push({
+        currency: debt.currency,
+        name: debtor.user.displayName,
+        amount: (-debtor.amount).toFixed(debt.currency.decimalDigits),
+      })
+      // }
     }
   }
   return (
@@ -56,9 +59,18 @@ const GroupDebt: React.FC<{
         row.map((debt) => {
           return (
             <Stack direction="row" gap={1}>
-              <Typography>{debt.name}</Typography>
-              <Typography>owes you</Typography>
-              <Typography sx={{ color: "green" }}>{debt.currency.symbol}{debt.amount}</Typography>
+
+              {
+                debt.amount.startsWith("-")
+                  ? (
+                    <Typography sx={{ color: "orange" }}>You owes {debt.name} {debt.currency.symbol}{debt.amount}</Typography>
+
+                  )
+                  : (
+                    <Typography sx={{ color: "green" }}>{debt.name} owes You {debt.currency.symbol}{debt.amount}</Typography>
+                  )
+              }
+
             </Stack>
           )
         })
