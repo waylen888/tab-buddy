@@ -13,10 +13,10 @@ import QueryClientProvider from './components/QueryClientProvider';
 
 import { SnackbarProvider } from 'notistack';
 import GroupDialog from './routes/GroupDialog';
-import { ThemeProvider, createTheme } from '@mui/material';
+import { CssBaseline, GlobalStyles, ThemeProvider, createTheme } from '@mui/material';
 import InviteDialog from './routes/InviteDialog';
 import Expense from './routes/Expense';
-import GroupSetting from './routes/GroupSetting';
+import GroupSettingDialog from './routes/GroupSettingDialog';
 
 
 const router = createBrowserRouter([
@@ -47,15 +47,15 @@ const router = createBrowserRouter([
             path: "create/expense",
             element: <ExpenseDialog />
           },
-        ],
-      },
-      {
-        path: "group/:id/setting",
-        element: <GroupSetting />,
-        children: [
           {
-            path: "invite",
-            element: <InviteDialog />
+            path: "setting",
+            element: <GroupSettingDialog />,
+            children: [
+              {
+                path: "invite",
+                element: <InviteDialog />
+              },
+            ],
           },
         ],
       },
@@ -94,6 +94,14 @@ const theme = createTheme({
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <ThemeProvider theme={theme}>
+      <CssBaseline />
+      {/* <GlobalStyles
+        styles={{
+          body: {
+            backgroundColor: theme.palette.primary.main,
+          }
+        }}
+      /> */}
       <QueryClientProvider>
         <SnackbarProvider dense anchorOrigin={{ vertical: "top", horizontal: "center" }}>
           <RouterProvider router={router} />

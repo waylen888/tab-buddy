@@ -3,20 +3,24 @@ package model
 import "time"
 
 type Group struct {
-	ID       string    `json:"id"`
-	Name     string    `json:"name"`
-	CreateAt time.Time `json:"createAt"`
-	UpdateAt time.Time `json:"updateAt"`
+	ID           string    `json:"id"`
+	Name         string    `json:"name"`
+	ConvertToTwd bool      `json:"convertToTwd"`
+	CreateAt     time.Time `json:"createAt"`
+	UpdateAt     time.Time `json:"updateAt"`
 }
 
 type Expense struct {
-	ID          string    `json:"id"`
-	Amount      string    `json:"amount"`
-	Description string    `json:"description"`
-	Date        time.Time `json:"date"`
-	CreateAt    time.Time `json:"createAt"`
-	UpdateAt    time.Time `json:"updateAt"`
-	CreatedBy   User      `json:"createdBy"`
+	ID           string    `json:"id"`
+	Amount       string    `json:"amount"`
+	Description  string    `json:"description"`
+	Date         time.Time `json:"date"`
+	CurrencyCode string    `json:"currencyCode"`
+	Category     string    `json:"category"`
+	TWDRate      string    `json:"twdRate"`
+	CreateAt     time.Time `json:"createAt"`
+	UpdateAt     time.Time `json:"updateAt"`
+	CreatedBy    User      `json:"createdBy"`
 }
 
 type ExpenseWithSplitUsers struct {

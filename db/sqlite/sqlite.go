@@ -110,6 +110,7 @@ var tableSchemes = []lo.Tuple2[string, string]{
 CREATE TABLE IF NOT EXISTS "group" (
   "id"	TEXT NOT NULL,
   "name"	TEXT NOT NULL,
+	"convert_to_twd"	BOOLEAN NOT NULL DEFAULT 0,
   "create_at" DATETIME NOT NULL,
   "update_at" DATETIME NOT NULL,
   PRIMARY KEY("id")
@@ -140,6 +141,8 @@ CREATE TABLE IF NOT EXISTS "expense" (
 	"amount"	TEXT NOT NULL,
 	"date" DATETIME NOT NULL,
 	"currency_code" TEXT NOT NULL,
+	"category" TEXT NOT NULL DEFAULT "",
+	"twd_rate" TEXT NOT NULL,
   "create_at" DATETIME NOT NULL,
   "update_at" DATETIME NOT NULL,
 	"created_by" TEXT NOT NULL,

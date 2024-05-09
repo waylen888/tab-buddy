@@ -3,13 +3,18 @@ package calc
 import (
 	"github.com/samber/lo"
 	"github.com/shopspring/decimal"
-	"github.com/waylen888/tab-buddy/db/entity"
 )
 
-func SplitValue(expenseAmount string, splitUsers []entity.SplitUser, userID string) (sum decimal.Decimal) {
+type SplitUser struct {
+	ID   string
+	Paid bool
+	Owed bool
+}
+
+func SplitValue(expenseAmount string, splitUsers []SplitUser, userID string) (sum decimal.Decimal) {
 	amount, _ := decimal.NewFromString(expenseAmount)
 	// numberOfUsers := decimal.NewFromInt(int64(len(splitUsers)))
-	owedUserCount := decimal.NewFromInt(lo.SumBy(splitUsers, func(user entity.SplitUser) int64 {
+	owedUserCount := decimal.NewFromInt(lo.SumBy(splitUsers, func(user SplitUser) int64 {
 		if user.Owed {
 			return 1
 		}
@@ -17,8 +22,7 @@ func SplitValue(expenseAmount string, splitUsers []entity.SplitUser, userID stri
 	}))
 	avg := amount.Div(owedUserCount)
 	one := decimal.NewFromInt(1)
-	zero := decimal.NewFromInt(0)
-	if owedUserCount.Equal(zero) {
+	if owedUserCount.Equal(decimal.Zero) {
 		return
 	}
 	for _, user := range splitUsers {

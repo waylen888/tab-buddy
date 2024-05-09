@@ -12,7 +12,7 @@ type Database interface {
 	GetGroups(userID string) ([]entity.Group, error)
 	GetGroup(ID string, userID string) (entity.Group, error)
 	CreateGroup(name string, ownerID string) (entity.Group, error)
-	UpdateGroup(ID string, name string) (entity.Group, error)
+	UpdateGroup(ID string, name string, convertToTwd bool) (entity.Group, error)
 	DeleteGroup(ID string) error
 	GetGroupMembers(ID string) ([]entity.User, error)
 	AddUserToGroupByUsername(groupID string, username string) error

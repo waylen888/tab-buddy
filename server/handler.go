@@ -19,15 +19,17 @@ import (
 	"github.com/waylen888/tab-buddy/calc"
 	"github.com/waylen888/tab-buddy/db"
 	"github.com/waylen888/tab-buddy/db/entity"
+	"github.com/waylen888/tab-buddy/finmind"
 	"github.com/waylen888/tab-buddy/server/model"
 )
 
 type APIHandler struct {
-	db db.Database
+	db         db.Database
+	rateGetter finmind.TaiwanExchangeRateGetter
 }
 
-func NewAPIHandler(db db.Database) *APIHandler {
-	return &APIHandler{db: db}
+func NewAPIHandler(db db.Database, rateGetter finmind.TaiwanExchangeRateGetter) *APIHandler {
+	return &APIHandler{db: db, rateGetter: rateGetter}
 }
 
 const TOKEN_SECRET = "Kia9012)f^#$$"
@@ -145,10 +147,11 @@ func (h *APIHandler) getGroups(ctx *gin.Context) {
 	}
 	ctx.JSON(http.StatusOK, lo.Map(groups, func(group entity.Group, _ int) model.Group {
 		return model.Group{
-			ID:       group.ID,
-			Name:     group.Name,
-			CreateAt: group.CreateAt,
-			UpdateAt: group.UpdateAt,
+			ID:           group.ID,
+			Name:         group.Name,
+			ConvertToTwd: group.ConvertToTwd.Bool(),
+			CreateAt:     group.CreateAt,
+			UpdateAt:     group.UpdateAt,
 		}
 	}))
 }
@@ -165,10 +168,11 @@ func (h *APIHandler) getGroup(ctx *gin.Context) {
 		return
 	}
 	ctx.JSON(http.StatusOK, model.Group{
-		ID:       group.ID,
-		Name:     group.Name,
-		CreateAt: group.CreateAt,
-		UpdateAt: group.UpdateAt,
+		ID:           group.ID,
+		Name:         group.Name,
+		ConvertToTwd: group.ConvertToTwd.Bool(),
+		CreateAt:     group.CreateAt,
+		UpdateAt:     group.UpdateAt,
 	})
 }
 
@@ -187,32 +191,35 @@ func (h *APIHandler) createGroup(ctx *gin.Context) {
 		return
 	}
 	ctx.JSON(http.StatusOK, model.Group{
-		ID:       group.ID,
-		Name:     group.Name,
-		CreateAt: group.CreateAt,
-		UpdateAt: group.UpdateAt,
+		ID:           group.ID,
+		Name:         group.Name,
+		ConvertToTwd: group.ConvertToTwd.Bool(),
+		CreateAt:     group.CreateAt,
+		UpdateAt:     group.UpdateAt,
 	})
 }
 
 func (h *APIHandler) updateGroup(ctx *gin.Context) {
 	id := ctx.Param("id")
 	var req struct {
-		Name string `json:"name" binding:"required"`
+		Name         string `json:"name" binding:"required"`
+		ConvertToTwd bool   `json:"convertToTwd"`
 	}
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
-	group, err := h.db.UpdateGroup(id, req.Name)
+	group, err := h.db.UpdateGroup(id, req.Name, req.ConvertToTwd)
 	if err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 	ctx.JSON(http.StatusOK, model.Group{
-		ID:       group.ID,
-		Name:     group.Name,
-		CreateAt: group.CreateAt,
-		UpdateAt: group.UpdateAt,
+		ID:           group.ID,
+		Name:         group.Name,
+		ConvertToTwd: group.ConvertToTwd.Bool(),
+		CreateAt:     group.CreateAt,
+		UpdateAt:     group.UpdateAt,
 	})
 }
 
@@ -226,6 +233,11 @@ func (h *APIHandler) deleteGroup(ctx *gin.Context) {
 }
 
 func (h *APIHandler) getGroupExpenses(ctx *gin.Context) {
+	group, err := h.db.GetGroup(ctx.Param("id"), GetUser(ctx).ID)
+	if err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
 	expenses, err := h.db.GetGroupExpenses(ctx.Param("id"))
 	if err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
@@ -233,13 +245,20 @@ func (h *APIHandler) getGroupExpenses(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, lo.Map(expenses, func(expense entity.ExpenseWithSplitUser, _ int) model.GroupExpense {
-		currency, _ := h.db.GetCurrency(expense.CurrencyCode)
+		var currency entity.Currency
+		if group.ConvertToTwd {
+			currency, _ = h.db.GetCurrency("TWD")
+		} else {
+			currency, _ = h.db.GetCurrency(expense.CurrencyCode)
+		}
 		return model.GroupExpense{
 			Expense: model.Expense{
 				ID:          expense.ID,
-				Amount:      expense.Amount,
+				Amount:      group.ConvertToTwd.ToTWD(expense.Amount, expense.TWDRate, currency.DecimalDigits),
 				Description: expense.Description,
 				Date:        expense.Date,
+				Category:    expense.Category,
+				TWDRate:     expense.TWDRate,
 				CreateAt:    expense.CreateAt,
 				UpdateAt:    expense.UpdateAt,
 			},
@@ -256,7 +275,7 @@ func (h *APIHandler) getGroupExpenses(ctx *gin.Context) {
 					},
 					Paid:   user.Paid,
 					Owed:   user.Owed,
-					Amount: user.Amount,
+					Amount: group.ConvertToTwd.ToTWD(user.Amount, expense.TWDRate, currency.DecimalDigits),
 				}
 			}),
 		}
@@ -275,6 +294,7 @@ func (h *APIHandler) createExpense(ctx *gin.Context) {
 		Description  string      `json:"description" binding:"required"`
 		Date         time.Time   `json:"date" binding:"required"`
 		CurrencyCode string      `json:"currencyCode" binding:"required"`
+		Category     string      `json:"category"`
 		SplitUsers   []SplitUser `json:"splitUsers" binding:"required,gt=0"`
 	}
 	if err := ctx.ShouldBindJSON(&req); err != nil {
@@ -292,12 +312,20 @@ func (h *APIHandler) createExpense(ctx *gin.Context) {
 		return
 	}
 
+	rate, err := h.rateGetter.GetExchangeRate(req.CurrencyCode)
+	if err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
 	expense, err := h.db.CreateExpense(entity.CreateExpenseArguments{
 		GroupID:      ctx.Param("id"),
 		Amount:       req.Amount,
+		TWDRate:      rate.String(),
 		Description:  req.Description,
 		Date:         req.Date,
 		CurrencyCode: req.CurrencyCode,
+		Category:     req.Category,
 		SplitUsers: lo.Map(req.SplitUsers, func(user SplitUser, _ int) entity.SplitUser {
 			return entity.SplitUser{
 				User: entity.User{ID: user.ID},
@@ -316,6 +344,8 @@ func (h *APIHandler) createExpense(ctx *gin.Context) {
 		Amount:      expense.Amount,
 		Description: expense.Description,
 		Date:        expense.Date,
+		Category:    expense.Category,
+		TWDRate:     expense.TWDRate,
 		CreateAt:    expense.CreateAt,
 		UpdateAt:    expense.UpdateAt,
 	})
@@ -332,11 +362,17 @@ func (h *APIHandler) getGroupMembers(ctx *gin.Context) {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
-	ctx.JSON(http.StatusOK, lo.Map(members, func(user entity.User, _ int) model.GroupMember {
 
+	ctx.JSON(http.StatusOK, lo.Map(members, func(user entity.User, _ int) model.GroupMember {
 		sum := decimal.NewFromFloat(0)
 		for _, expense := range expenses {
-			sum = calc.SplitValue(expense.Amount, expense.SplitUsers, user.ID)
+			sum = calc.SplitValue(expense.Amount, lo.Map(expense.SplitUsers, func(su entity.SplitUser, _ int) calc.SplitUser {
+				return calc.SplitUser{
+					ID:   su.ID,
+					Paid: su.Paid,
+					Owed: su.Owed,
+				}
+			}), user.ID)
 		}
 
 		return model.GroupMember{
@@ -395,6 +431,8 @@ func (h *APIHandler) getExpense(ctx *gin.Context) {
 			Amount:      expense.Amount,
 			Description: expense.Description,
 			Date:        expense.Date,
+			Category:    expense.Category,
+			TWDRate:     expense.TWDRate,
 			CreateAt:    expense.CreateAt,
 			UpdateAt:    expense.UpdateAt,
 			CreatedBy: model.User{
@@ -416,7 +454,9 @@ func (h *APIHandler) getExpense(ctx *gin.Context) {
 					CreateAt:    splitUser.CreateAt,
 					UpdateAt:    splitUser.UpdateAt,
 				},
-				Paid: splitUser.Paid,
+				Paid:   splitUser.Paid,
+				Owed:   splitUser.Owed,
+				Amount: splitUser.Amount,
 			}
 		}),
 	})

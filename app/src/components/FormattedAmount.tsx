@@ -3,7 +3,7 @@ import { Currency } from "../model";
 
 const FormattedAmount: React.FC<{
   currency: Currency;
-  value: string | null;
+  value: string | number | null;
   style?: CSSProperties | undefined
 }> = ({ currency, value, style }) => {
   const nf = Intl.NumberFormat(undefined, { style: "currency", currency: currency.code })

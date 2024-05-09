@@ -1,4 +1,4 @@
-import { AppBar, Box, Button, Drawer, IconButton, List, ListItem, ListItemButton, ListItemText, Toolbar, Typography } from '@mui/material';
+import { AppBar, Box, Button, Drawer, IconButton, List, ListItem, ListItemButton, ListItemText, Toolbar, Typography, useMediaQuery, useTheme } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -27,26 +27,48 @@ export default function NavBar() {
     </Box>
   );
 
+  const theme = useTheme();
+  const fullScreen = useMediaQuery(theme.breakpoints.up('md'));
 
 
   return (
     <>
-      <Drawer open={open} onClose={toggleDrawer(false)}>
+      <Drawer
+        open={open || fullScreen}
+        onClose={toggleDrawer(false)}
+        ModalProps={{
+          keepMounted: true, // Better open performance on mobile.
+          disablePortal: true,
+          disableAutoFocus: true,
+          disableScrollLock: true,
+        }}
+        variant={fullScreen ? "permanent" : "temporary"}
+      >
+        <Toolbar />{/* for padding */}
         {DrawerList}
       </Drawer>
 
-      <AppBar position="static">
+      <AppBar
+        position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}
+      >
         <Toolbar>
-          <IconButton
-            size="large"
-            edge="start"
-            color="inherit"
-            aria-label="menu"
-            sx={{ mr: 2 }}
-            onClick={toggleDrawer(true)}
-          >
-            <MenuIcon />
-          </IconButton>
+          {
+            fullScreen
+              ? null
+              : (
+                <IconButton
+                  size="large"
+                  edge="start"
+                  color="inherit"
+                  aria-label="menu"
+                  sx={{ mr: 2 }}
+                  onClick={toggleDrawer(true)}
+                >
+                  <MenuIcon />
+                </IconButton>
+              )
+          }
+
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
             TAB BUDDY
           </Typography>

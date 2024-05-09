@@ -6,7 +6,7 @@ import dayjs from "dayjs"
 import AddIcon from '@mui/icons-material/Add';
 import { useAuth } from "../components/AuthProvider"
 import FormattedAmount from "../components/FormattedAmount"
-
+import CategoryIcon from "../components/CategoryIcon"
 
 const GroupExpenses: React.FC<{
   data: GroupExpense[] | undefined;
@@ -55,11 +55,8 @@ const GroupExpenses: React.FC<{
                       fontWeight: "bold",
                     }
                   }}>
-                    <TableCell>
+                    <TableCell colSpan={3}>
                       {cat.date}
-                    </TableCell>
-                    <TableCell>
-
                     </TableCell>
                   </TableRow>
                 </TableHead>)
@@ -75,15 +72,18 @@ const GroupExpenses: React.FC<{
                       }}
                       hover
                     >
+                      <TableCell sx={{ width: 0 }} padding="checkbox">
+                        <CategoryIcon category={expense.category} />
+                      </TableCell>
                       <TableCell>
                         <Stack>
-                          <Typography>
+                          <Typography fontWeight="bold">
                             {expense.description}
                           </Typography>
-                          <Typography variant="subtitle2">
+                          <Typography variant="caption">
                             <YouOrDisplayName user={expense.splitUsers.find(user => user.paid)} />
                             <span> paid </span>
-                            {expense.currency.symbol}{expense.amount}
+                            <FormattedAmount currency={expense.currency} value={expense.amount} />
                           </Typography>
                         </Stack>
 
@@ -148,13 +148,18 @@ const Amount: React.FC<{
   if (!value) {
     return <span>not involved</span>
   }
+  const borrowed = value.startsWith("-")
   return (
-    <FormattedAmount
-      currency={currency}
-      style={{
-        color: value.startsWith("-") ? "orange" : "green",
-      }}
-      value={value}
-    />
+    <>
+      <Stack sx={{ color: borrowed ? "orange" : "green" }}>
+        <Typography variant="caption" sx={{ textAlign: 'right' }}>
+          {borrowed ? "you borrowd" : "you lent"}
+        </Typography>
+        <Typography variant="caption" sx={{ textAlign: 'right' }} fontWeight="bold">
+          <FormattedAmount currency={currency} value={value} />
+        </Typography>
+      </Stack>
+    </>
+
   )
 }

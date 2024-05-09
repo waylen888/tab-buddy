@@ -4,7 +4,20 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react(), VitePWA({ registerType: 'autoUpdate' })],
+  plugins: [
+    react(),
+    VitePWA({
+      registerType: 'autoUpdate',
+      manifest: {
+        name: "TAB BUDDY",
+        short_name: "TABBUD",
+        description: "A simple expense tracker",
+        background_color: "yellow",
+        theme_color: "blue",
+
+      },
+    }),
+  ],
   server: {
     port: 3000,
     host: '0.0.0.0',

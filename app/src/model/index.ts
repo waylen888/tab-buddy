@@ -1,6 +1,7 @@
 export interface Group {
   id: string
   name: string
+  convertToTwd: boolean;
   createAt: string
   updateAt: string
 }
@@ -10,6 +11,7 @@ export interface Expense {
   amount: string
   description: string
   date: string
+  category: string
   createAt: string
   updateAt: string
   createdBy: User

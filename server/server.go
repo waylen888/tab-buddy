@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/waylen888/tab-buddy/db"
+	"github.com/waylen888/tab-buddy/finmind"
 )
 
 type Server struct {
@@ -13,7 +14,7 @@ type Server struct {
 
 func New(db db.Database) *Server {
 	return &Server{
-		handler: NewAPIHandler(db),
+		handler: NewAPIHandler(db, finmind.NewClient()),
 	}
 }
 
