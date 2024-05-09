@@ -175,11 +175,20 @@ func (s *sqlite) GetExpense(ID string) (entity.ExpenseWithSplitUser, error) {
 func (s *sqlite) CreateExpense(args entity.CreateExpenseArguments) (entity.Expense, error) {
 	ctx, cancel := context.WithTimeout(context.TODO(), s.timeout)
 	defer cancel()
+
+	currency, err := s.GetCurrency(args.CurrencyCode)
+	if err != nil {
+		return entity.Expense{}, err
+	}
+
 	expense := entity.Expense{
-		ID:          xid.New().String(),
-		Amount:      args.Amount,
-		Description: args.Description,
-		CreateAt:    time.Now(),
+		ID:           xid.New().String(),
+		Amount:       args.Amount,
+		Description:  args.Description,
+		Date:         args.Date,
+		CurrencyCode: currency.Code,
+		CreateAt:     time.Now(),
+		CreatedBy:    args.CreateByUserID,
 	}
 	tx, err := s.rwDB.BeginTx(ctx, nil)
 	if err != nil {
@@ -194,11 +203,11 @@ func (s *sqlite) CreateExpense(args entity.CreateExpenseArguments) (entity.Expen
 		sql.Named("id", expense.ID),
 		sql.Named("amount", expense.Amount),
 		sql.Named("description", expense.Description),
-		sql.Named("date", args.Date),
-		sql.Named("currency_code", args.CurrencyCode),
+		sql.Named("date", expense.Date),
+		sql.Named("currency_code", expense.CurrencyCode),
 		sql.Named("create_at", expense.CreateAt),
 		sql.Named("update_at", expense.UpdateAt),
-		sql.Named("created_by", args.CreateByUserID),
+		sql.Named("created_by", expense.CreatedBy),
 	)
 	if err != nil {
 		return expense, err
@@ -219,7 +228,9 @@ func (s *sqlite) CreateExpense(args entity.CreateExpenseArguments) (entity.Expen
 			sql.Named("user_id", user.ID),
 			sql.Named("expense_id", expense.ID),
 			sql.Named("type", 0),
-			sql.Named("amount", calc.SplitValue(expense.Amount, args.SplitUsers, user.ID)),
+			sql.Named("amount",
+				calc.SplitValue(expense.Amount, args.SplitUsers, user.ID).StringFixed(int32(currency.DecimalDigits)),
+			),
 			sql.Named("paid", user.Paid),
 			sql.Named("owed", user.Owed),
 		)

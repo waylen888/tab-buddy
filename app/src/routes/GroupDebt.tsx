@@ -1,31 +1,47 @@
 import { Stack, Typography } from "@mui/material"
 import { useAuth } from "../components/AuthProvider"
 import { Currency, GroupExpense, User } from "../model"
+import FormattedAmount from "../components/FormattedAmount"
 
 const GroupDebt: React.FC<{
   expenses: GroupExpense[] | undefined
 }> = ({ expenses }) => {
   const { user: me } = useAuth()
-  const debts = expenses?.reduce((pv, cv) => {
-    if (!pv[cv.currency.code]) {
-      pv[cv.currency.code] = {
-        currency: cv.currency,
+  const debts = expenses?.reduce((pv, expense) => {
+    if (!pv[expense.currency.code]) {
+      pv[expense.currency.code] = {
+        currency: expense.currency,
         debtor: {},
       }
     }
-    pv[cv.currency.code] = cv.splitUsers.filter(user => user.id !== me.id).reduce((pv, cv) => {
-      if (!pv.debtor[cv.username]) {
-        pv.debtor[cv.username] = {
-          user: cv,
-          amount: 0,
+
+    const paidUser = expense.splitUsers.find(u => u.paid);
+    console.debug(`expense`, expense.description, `found paid user`, paidUser.displayName)
+    if (paidUser.id === me.id) {
+      pv[expense.currency.code] = expense.splitUsers.filter(user => user.id !== me.id).reduce((pv, cv, _, splitUsers) => {
+        if (!pv.debtor[cv.id]) {
+          pv.debtor[cv.id] = {
+            user: cv,
+            amount: 0,
+          }
         }
-      }
-      pv.debtor[cv.username].amount += Number(cv.amount)
-      if (cv.paid) {
-        pv.debtor[cv.username].user = cv
-      }
-      return pv
-    }, pv[cv.currency.code])
+        pv.debtor[cv.id].amount -= Number(cv.amount)
+
+        return pv
+      }, pv[expense.currency.code])
+    } else {
+      pv[expense.currency.code] = expense.splitUsers.filter(user => user.id === me.id).reduce((pv, cv, _, splitUsers) => {
+        if (!pv.debtor[paidUser.id]) {
+          pv.debtor[paidUser.id] = {
+            user: paidUser,
+            amount: 0,
+          }
+        }
+        pv.debtor[paidUser.id].amount += Number(cv.amount)
+        return pv
+      }, pv[expense.currency.code])
+    }
+
     return pv
   }, {} as {
     [key: string]: {
@@ -48,7 +64,7 @@ const GroupDebt: React.FC<{
       row.push({
         currency: debt.currency,
         name: debtor.user.displayName,
-        amount: (-debtor.amount).toFixed(debt.currency.decimalDigits),
+        amount: (debtor.amount).toFixed(debt.currency.decimalDigits),
       })
       // }
     }
@@ -56,18 +72,20 @@ const GroupDebt: React.FC<{
   return (
     <>
       {
-        row.map((debt) => {
+        row.map((debt, index) => {
           return (
-            <Stack direction="row" gap={1}>
-
+            <Stack direction="row" gap={1} key={index}>
               {
                 debt.amount.startsWith("-")
                   ? (
-                    <Typography sx={{ color: "orange" }}>You owes {debt.name} {debt.currency.symbol}{debt.amount}</Typography>
-
+                    <Typography sx={{ color: "orange" }}>You owes {debt.name}
+                      <FormattedAmount currency={debt.currency} value={debt.amount} />
+                    </Typography>
                   )
                   : (
-                    <Typography sx={{ color: "green" }}>{debt.name} owes You {debt.currency.symbol}{debt.amount}</Typography>
+                    <Typography sx={{ color: "green" }}>{debt.name} owes You
+                      <FormattedAmount currency={debt.currency} value={debt.amount} />
+                    </Typography>
                   )
               }
 

@@ -1,10 +1,11 @@
 import { Fragment, ReactNode } from "react"
 import { Box, Fab, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, tableCellClasses } from "@mui/material"
 import { useNavigate } from "react-router-dom"
-import { GroupExpense, User } from "../model"
+import { Currency, GroupExpense, User } from "../model"
 import dayjs from "dayjs"
 import AddIcon from '@mui/icons-material/Add';
 import { useAuth } from "../components/AuthProvider"
+import FormattedAmount from "../components/FormattedAmount"
 
 
 const GroupExpenses: React.FC<{
@@ -89,8 +90,8 @@ const GroupExpenses: React.FC<{
                       </TableCell>
                       <TableCell>
                         <Amount
-                          symbol={expense.currency.symbol}
-                          value={expense.splitUsers.find((user) => user.id === me.id)?.amount ?? ''}
+                          currency={expense.currency}
+                          value={expense.splitUsers.find((user) => user.id === me.id)?.amount ?? null}
                         />
                       </TableCell>
                     </TableRow>
@@ -141,12 +142,19 @@ const YouOrDisplayName: React.FC<{
 }
 
 const Amount: React.FC<{
-  symbol: string;
-  value: string;
-}> = ({ symbol, value }) => {
-  return value.startsWith("-") ? (
-    <span style={{ color: "orange" }}>{symbol}{value}</span>
-  ) : (
-    <span style={{ color: "green" }}>{symbol}{value}</span>
+  currency: Currency;
+  value: string | null;
+}> = ({ currency, value }) => {
+  if (!value) {
+    return <span>not involved</span>
+  }
+  return (
+    <FormattedAmount
+      currency={currency}
+      style={{
+        color: value.startsWith("-") ? "orange" : "green",
+      }}
+      value={value}
+    />
   )
 }

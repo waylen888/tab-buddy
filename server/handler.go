@@ -244,8 +244,6 @@ func (h *APIHandler) getGroupExpenses(ctx *gin.Context) {
 				UpdateAt:    expense.UpdateAt,
 			},
 			Currency: model.Currency(currency),
-			Sum: calc.SplitValue(expense.Amount, expense.SplitUsers, GetUser(ctx).ID).
-				StringFixed(int32(currency.DecimalDigits)),
 			SplitUsers: lo.Map(expense.SplitUsers, func(user entity.SplitUser, _ int) model.SplitUser {
 				return model.SplitUser{
 					User: model.User{

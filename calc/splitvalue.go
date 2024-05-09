@@ -6,7 +6,6 @@ import (
 	"github.com/waylen888/tab-buddy/db/entity"
 )
 
-// FIXME: add currency
 func SplitValue(expenseAmount string, splitUsers []entity.SplitUser, userID string) (sum decimal.Decimal) {
 	amount, _ := decimal.NewFromString(expenseAmount)
 	// numberOfUsers := decimal.NewFromInt(int64(len(splitUsers)))
