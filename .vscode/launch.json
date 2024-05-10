@@ -12,7 +12,8 @@
       "program": "${workspaceFolder}",
       "output": "${workspaceFolder}/debug/tabbud",
       "args": [
-        "--database-path=./testdata/tabbuddy.sqlite"
+        "--database-path=./testdata/tabbuddy.sqlite",
+        "--config.file=./debug-data/config.toml",
       ]
     }
   ]

@@ -124,7 +124,7 @@ func (h *APIHandler) createUser(ctx *gin.Context) {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
-	user, err := h.db.CreateUser(req.Username, req.DisplayName, req.Email, req.Password)
+	user, err := h.db.CreateUser(req.Username, req.DisplayName, req.Email, req.Password, entity.UserCreateTypeDefault)
 	if err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
@@ -391,13 +391,14 @@ func (h *APIHandler) getGroupMembers(ctx *gin.Context) {
 
 func (h *APIHandler) inviteUserToGroup(ctx *gin.Context) {
 	var req struct {
-		Username string `json:"username" binding:"required"`
+		Username *string `json:"username"`
+		Email    *string `json:"email"`
 	}
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
-	if err := h.db.AddUserToGroupByUsername(ctx.Param("id"), req.Username); err != nil {
+	if err := h.db.AddUserToGroupByUsername(ctx.Param("id"), req.Username, req.Email); err != nil {
 		if errors.Is(err, db.ErrUserAlreadyInGroup) {
 			ctx.Status(http.StatusOK)
 			return

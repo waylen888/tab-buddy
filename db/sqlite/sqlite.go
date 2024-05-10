@@ -130,6 +130,7 @@ CREATE TABLE IF NOT EXISTS "user" (
   "display_name"	TEXT NOT NULL,
 	"password" TEXT NOT NULL,
 	"email" TEXT NOT NULL,
+	"create_type" INTEGER NOT NULL DEFAULT 0, 
   "create_at" DATETIME NOT NULL,
   "update_at" DATETIME NOT NULL,
   PRIMARY KEY("id")

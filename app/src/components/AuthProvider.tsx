@@ -21,6 +21,7 @@ const AuthProvider: React.FC<{
       return authFetch(`/api/auth/refresh_token`)
     }
   });
+  console.debug(`refresh_token`, `error`)
 
   useEffect(() => {
     if (data?.token) {
@@ -33,8 +34,9 @@ const AuthProvider: React.FC<{
       <CircularProgress />
     )
   }
-
+  console.log(data)
   if (error || !data?.user) {
+    console.debug(`refresh_token`, error)
     localStorage.removeItem("access_token")
     return (
       <Navigate to="/login" />

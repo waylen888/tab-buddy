@@ -273,7 +273,7 @@ func (s *sqlite) GetGroupMembers(ID string) ([]entity.User, error) {
 	return members, nil
 }
 
-func (s *sqlite) AddUserToGroupByUsername(groupID string, username string) error {
+func (s *sqlite) AddUserToGroupByUsername(groupID string, username *string, email *string) error {
 	ctx, cancel := context.WithTimeout(context.TODO(), s.timeout)
 	defer cancel()
 	_, err := s.rwDB.ExecContext(
@@ -281,11 +281,18 @@ func (s *sqlite) AddUserToGroupByUsername(groupID string, username string) error
 		`INSERT INTO group_member (group_id, user_id) 
 		VALUES (
 			(SELECT id FROM "group" WHERE id = @group_id), 
-			(SELECT id FROM "user" WHERE username = @username)
+			(
+				SELECT id FROM "user" 
+				WHERE 1 = 1 
+				AND (1 = (CASE WHEN @username IS NULL THEN 1 ELSE 0 END) OR username = @username)
+				AND (1 = (CASE WHEN @email IS NULL THEN 1 ELSE 0 END) OR email = @email)
+			)
 		)`,
 		sql.Named("group_id", groupID),
 		sql.Named("username", username),
+		sql.Named("email", email),
 	)
+
 	var sqliteErr sqlite3.Error
 	if errors.As(err, &sqliteErr) && sqliteErr.ExtendedCode == 1555 {
 		return db.ErrUserAlreadyInGroup

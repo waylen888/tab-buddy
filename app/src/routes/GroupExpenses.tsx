@@ -145,21 +145,26 @@ const Amount: React.FC<{
   currency: Currency;
   value: string | null;
 }> = ({ currency, value }) => {
+
   if (!value) {
-    return <span>not involved</span>
-  }
-  const borrowed = value.startsWith("-")
-  return (
-    <>
-      <Stack sx={{ color: borrowed ? "orange" : "green" }}>
+    return (
+      <Stack sx={{}}>
         <Typography variant="caption" sx={{ textAlign: 'right' }}>
-          {borrowed ? "you borrowd" : "you lent"}
-        </Typography>
-        <Typography variant="caption" sx={{ textAlign: 'right' }} fontWeight="bold">
-          <FormattedAmount currency={currency} value={value} />
+          not involved
         </Typography>
       </Stack>
-    </>
+    )
+  }
 
+  const borrowed = value.startsWith("-")
+  return (
+    <Stack sx={{ color: borrowed ? "orange" : "green" }}>
+      <Typography variant="caption" sx={{ textAlign: 'right' }}>
+        {borrowed ? "you borrowd" : "you lent"}
+      </Typography>
+      <Typography variant="caption" sx={{ textAlign: 'right' }} fontWeight="bold">
+        <FormattedAmount currency={currency} value={value} />
+      </Typography>
+    </Stack>
   )
 }

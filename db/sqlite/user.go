@@ -3,6 +3,7 @@ package sqlite
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"time"
 
 	"github.com/georgysavva/scany/v2/sqlscan"
@@ -39,7 +40,17 @@ func (s *sqlite) GetUser(ID string) (entity.User, error) {
 	return user, err
 }
 
-func (s *sqlite) CreateUser(username, displayName, email, password string) (entity.User, error) {
+func (s *sqlite) CreateUser(username, displayName, email, password string, createType entity.UserCreateType) (entity.User, error) {
+	if username == "" {
+		return entity.User{}, fmt.Errorf("username is required")
+	}
+	if displayName == "" {
+		return entity.User{}, fmt.Errorf("displayName is required")
+	}
+	if password == "" && createType == entity.UserCreateTypeDefault {
+		return entity.User{}, fmt.Errorf("password is required")
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), s.timeout)
 	defer cancel()
 
@@ -54,18 +65,20 @@ func (s *sqlite) CreateUser(username, displayName, email, password string) (enti
 		Username:    username,
 		DisplayName: displayName,
 		Email:       email,
+		CreateType:  createType,
 		Password:    string(hashedPassword),
 		CreateAt:    createAt,
 	}
 
 	_, err = s.rwDB.ExecContext(
 		ctx,
-		`INSERT INTO "user" (id, username, display_name, email, password, create_at, update_at) 
-		VALUES (@id, @username, @display_name, @email, @password, @create_at, @update_at)`,
+		`INSERT INTO "user" (id, username, display_name, email, create_type, password, create_at, update_at) 
+		VALUES (@id, @username, @display_name, @email, @create_type, @password, @create_at, @update_at)`,
 		sql.Named("id", user.ID),
 		sql.Named("username", user.Username),
 		sql.Named("display_name", user.DisplayName),
 		sql.Named("email", user.Email),
+		sql.Named("create_type", user.CreateType),
 		sql.Named("password", user.Password),
 		sql.Named("create_at", user.CreateAt),
 		sql.Named("update_at", user.UpdateAt),

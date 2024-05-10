@@ -26,6 +26,10 @@ export default defineConfig({
         target: 'http://localhost:8080',
         changeOrigin: true,
       },
+      '/google': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+      },
     },
   },
 })

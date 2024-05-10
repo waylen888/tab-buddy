@@ -5,6 +5,10 @@ import { User } from "../model";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useSnackbar } from "notistack";
 import { authFetch } from "../hooks/api";
+import { LoadingButton } from "@mui/lab";
+
+import LoginIcon from '@mui/icons-material/Login';
+import GoogleIcon from '@mui/icons-material/Google';
 
 interface LoginForm {
   username: string;
@@ -14,7 +18,7 @@ interface LoginForm {
 const Login = () => {
   const navigate = useNavigate()
   const { enqueueSnackbar } = useSnackbar()
-  const { mutateAsync } = useMutation({
+  const { mutateAsync, isPending } = useMutation({
     mutationFn: (data: LoginForm) => {
       return authFetch<{ token: string; user: User; }>(
         `/api/auth/login`, {
@@ -70,8 +74,24 @@ const Login = () => {
                 rules={{ required: true }}
                 render={({ field }) => <TextField {...field} type="password" placeholder="Password" />}
               />
-              <Button type="submit">
+              <LoadingButton
+                type="submit"
+                variant="outlined"
+                disabled={!methods.formState.isValid || isPending}
+                loading={isPending}
+                startIcon={<LoginIcon />}
+              >
                 登入
+              </LoadingButton>
+              <Button
+                variant="outlined"
+                onClick={() => {
+                  window.location.href = '/google/oauth/login'
+                }}
+                disabled={isPending}
+                startIcon={<GoogleIcon />}
+              >
+                Google登入
               </Button>
             </Stack>
           </Stack>

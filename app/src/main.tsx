@@ -17,12 +17,17 @@ import { CssBaseline, GlobalStyles, ThemeProvider, createTheme } from '@mui/mate
 import InviteDialog from './routes/InviteDialog';
 import Expense from './routes/Expense';
 import GroupSettingDialog from './routes/GroupSettingDialog';
+import SetToken from './routes/SetToken';
 
 
 const router = createBrowserRouter([
   {
     path: "/login",
     element: <Login />
+  },
+  {
+    path: "/set-token",
+    element: <SetToken />
   },
   {
     path: "/",

@@ -4,17 +4,20 @@ import (
 	"context"
 
 	"github.com/gin-gonic/gin"
+	"github.com/waylen888/tab-buddy/config"
 	"github.com/waylen888/tab-buddy/db"
 	"github.com/waylen888/tab-buddy/finmind"
 )
 
 type Server struct {
-	handler *APIHandler
+	handler       *APIHandler
+	googleHandler *GoogleHandler
 }
 
-func New(db db.Database) *Server {
+func New(db db.Database, oauthCfg config.GoogleOAuth) *Server {
 	return &Server{
-		handler: NewAPIHandler(db, finmind.NewClient()),
+		handler:       NewAPIHandler(db, finmind.NewClient()),
+		googleHandler: NewGoogleHandler(db, oauthCfg),
 	}
 }
 
@@ -23,11 +26,10 @@ func (s *Server) Run(ctx context.Context, port string) error {
 	engine.Use(gin.Recovery())
 	engine.Use(gin.Logger())
 
-	engine.Use(func() gin.HandlerFunc {
-		return func(c *gin.Context) {
-			c.Writer.Header().Set("ngrok-skip-browser-warning", "1")
-		}
-	}())
+	engine.GET("/google/oauth/callback", s.googleHandler.Callback)
+	engine.GET("/google/oauth/login", s.googleHandler.Login)
+	engine.GET("/api/google/oauth/login", s.googleHandler.Login)
+
 	engine.NoRoute(s.handler.noRoute)
 
 	engine.POST("/api/auth/login", s.handler.login)

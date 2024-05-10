@@ -7,7 +7,7 @@ import (
 type Database interface {
 	GetUser(ID string) (entity.User, error)
 	GetUserByUsername(username string) (entity.User, error)
-	CreateUser(username, displayName, email, password string) (entity.User, error)
+	CreateUser(username, displayName, email, password string, createType entity.UserCreateType) (entity.User, error)
 
 	GetGroups(userID string) ([]entity.Group, error)
 	GetGroup(ID string, userID string) (entity.Group, error)
@@ -15,7 +15,7 @@ type Database interface {
 	UpdateGroup(ID string, name string, convertToTwd bool) (entity.Group, error)
 	DeleteGroup(ID string) error
 	GetGroupMembers(ID string) ([]entity.User, error)
-	AddUserToGroupByUsername(groupID string, username string) error
+	AddUserToGroupByUsername(groupID string, username *string, email *string) error
 
 	GetGroupExpenses(groupID string) ([]entity.ExpenseWithSplitUser, error)
 	GetExpense(ID string) (entity.ExpenseWithSplitUser, error)
