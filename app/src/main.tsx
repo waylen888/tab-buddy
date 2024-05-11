@@ -13,22 +13,14 @@ import QueryClientProvider from './components/QueryClientProvider';
 
 import { SnackbarProvider } from 'notistack';
 import GroupDialog from './routes/GroupDialog';
-import { Button, CssBaseline, GlobalStyles, ThemeProvider, createTheme } from '@mui/material';
+import { CssBaseline, GlobalStyles, ThemeProvider, createTheme } from '@mui/material';
 import InviteDialog from './routes/InviteDialog';
 import Expense from './routes/Expense';
 import GroupSettingDialog from './routes/GroupSettingDialog';
 import SetToken from './routes/SetToken';
 
-// 自定義一個 ServerSideRoute 元件來處理 server-side 的路由
-const ServerSideRoute = ({ }) => {
-  return null
-};
 
 const router = createBrowserRouter([
-  {
-    path: "/aaaaa",
-    element: <ServerSideRoute />
-  },
   {
     path: "/login",
     element: <Login />
@@ -114,10 +106,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       /> */}
       <QueryClientProvider>
         <SnackbarProvider dense anchorOrigin={{ vertical: "top", horizontal: "center" }}>
-          <Button onClick={() => {
-            window.location.href = "/api/aaaaaaaa"
-          }}>Click</Button>
-          {/* <RouterProvider router={router} fallbackElement={null} /> */}
+          <RouterProvider router={router} fallbackElement={null} />
         </SnackbarProvider>
       </QueryClientProvider>
     </ThemeProvider>
