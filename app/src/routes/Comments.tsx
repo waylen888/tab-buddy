@@ -2,11 +2,12 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
 import { authFetch } from "../hooks/api";
 import { Comment } from "../model";
-import { Box, Divider, Paper, Stack, TextField, Typography } from "@mui/material";
+import { Box, Divider, Paper, Stack, TextField, Typography, useMediaQuery, useTheme } from "@mui/material";
 import { Controller, useForm } from "react-hook-form";
 import { LoadingButton } from "@mui/lab";
 import { useSnackbar } from "notistack";
 import dayjs from "dayjs";
+import { DRAWER_WIDTH } from "../components/NavBar";
 
 const Comments = () => {
   const { id } = useParams<{ id: string }>()
@@ -98,12 +99,14 @@ const CommentPostForm = () => {
       enqueueSnackbar((err as Error).message, { variant: "error" })
     }
   }
+  const theme = useTheme()
+  const fullScreen = useMediaQuery(theme.breakpoints.up('md'));
 
   return (
     <form onSubmit={methods.handleSubmit(onSubmit)}>
       <Stack sx={{
         flexDirection: "row",
-        width: "100%",
+        width: `calc(100% - ${fullScreen ? DRAWER_WIDTH : '0px'})`,
         position: "fixed",
         bottom: 0,
         left: 0,
@@ -112,6 +115,7 @@ const CommentPostForm = () => {
         borderTop: (theme) => `1px solid ${theme.palette.divider}`,
         zIndex: (theme) => theme.zIndex.appBar + 1,
         backgroundColor: (theme) => theme.palette.background.paper,
+        marginLeft: fullScreen ? DRAWER_WIDTH : 0,
       }} >
         <Controller
           control={methods.control}

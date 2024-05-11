@@ -34,6 +34,10 @@ const router = createBrowserRouter([
     element: <SetToken />
   },
   {
+    path: "*",
+    element: <div>404</div>
+  },
+  {
     path: "/",
     element: <Layout />,
     children: [
@@ -72,10 +76,6 @@ const router = createBrowserRouter([
         path: "/expense/:id",
         element: <Expense />
       },
-      {
-        path: "*",
-        element: <div>404</div>
-      }
     ],
   },
 ])

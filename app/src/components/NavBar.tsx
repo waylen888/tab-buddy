@@ -3,6 +3,8 @@ import MenuIcon from '@mui/icons-material/Menu';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+export const DRAWER_WIDTH = "200px"
+
 export default function NavBar() {
   const [open, setOpen] = useState(false)
   const toggleDrawer = (newOpen: boolean) => () => {
@@ -11,7 +13,7 @@ export default function NavBar() {
   const navigate = useNavigate();
 
   const DrawerList = (
-    <Box sx={{ width: 250 }} role="presentation" onClick={toggleDrawer(false)}>
+    <Box sx={{ width: DRAWER_WIDTH }} role="presentation" onClick={toggleDrawer(false)}>
       <List>
         {['Groups'].map((text) => (
           <ListItem key={text} disablePadding>
