@@ -10,15 +10,15 @@ import SettingsIcon from '@mui/icons-material/Settings';
 
 
 export default function GroupRoute() {
-  const { id } = useParams<{ id: string }>();
+  const { groupId } = useParams<{ groupId: string }>();
   const { data } = useQuery({
-    queryKey: ['group', id],
-    queryFn: () => authFetch<Group>(`/api/group/${id}`)
+    queryKey: ['group', groupId],
+    queryFn: () => authFetch<Group>(`/api/group/${groupId}`)
   })
 
   const { refetch: refetchGroupExpenses, data: groupExpenses } = useQuery({
-    queryKey: ['group', id, 'expenses'],
-    queryFn: () => authFetch<GroupExpense[]>(`/api/group/${id}/expenses`)
+    queryKey: ['group', groupId, 'expenses'],
+    queryFn: () => authFetch<GroupExpense[]>(`/api/group/${groupId}/expenses`)
   })
   const navigate = useNavigate()
 
@@ -37,7 +37,6 @@ export default function GroupRoute() {
         data={groupExpenses}
         onRefetchRequest={() => refetchGroupExpenses()}
       />
-
       <Outlet />
     </div>
   )

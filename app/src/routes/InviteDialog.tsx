@@ -12,18 +12,18 @@ interface InviteFormValues {
 }
 
 const InviteDialog = () => {
-  const { id } = useParams<{ id: string }>()
+  const { groupId } = useParams<{ groupId: string }>()
   const queryClient = useQueryClient();
   const { mutateAsync, isPending } = useMutation({
     mutationFn: (data: InviteFormValues) => {
-      return authFetch(`/api/group/${id}/invite`, {
+      return authFetch(`/api/group/${groupId}/invite`, {
         method: "POST",
         body: JSON.stringify(data),
       })
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ['group', id, 'members']
+        queryKey: ['group', groupId, 'members']
       })
     },
   })

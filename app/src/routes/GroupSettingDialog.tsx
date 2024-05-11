@@ -14,7 +14,7 @@ interface GroupModifyFormValues {
 }
 
 const GroupSettingDialog: React.FC<{}> = () => {
-  const { id } = useParams<{ id: string }>()
+  const { groupId } = useParams<{ groupId: string }>()
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down('md'));
   const navigate = useNavigate();
@@ -23,8 +23,8 @@ const GroupSettingDialog: React.FC<{}> = () => {
   }
 
   const { data, isLoading } = useQuery({
-    queryKey: ['group', id],
-    queryFn: () => authFetch<Group>(`/api/group/${id}`)
+    queryKey: ['group', groupId],
+    queryFn: () => authFetch<Group>(`/api/group/${groupId}`)
   })
   const methods = useForm<GroupModifyFormValues>()
 
@@ -74,13 +74,13 @@ export default GroupSettingDialog
 
 
 const Form = () => {
-  const { id } = useParams<{ id: string }>()
+  const { groupId } = useParams<{ groupId: string }>()
   const { handleSubmit, control, trigger } = useFormContext<GroupModifyFormValues>()
   const { enqueueSnackbar } = useSnackbar()
   const queryClient = useQueryClient()
   const { mutateAsync } = useMutation({
     mutationFn: async (values: GroupModifyFormValues) => {
-      return await authFetch(`/api/group/${id}`, {
+      return await authFetch(`/api/group/${groupId}`, {
         method: "PUT",
         body: JSON.stringify({
           ...values,
@@ -88,7 +88,7 @@ const Form = () => {
       })
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['group', id] })
+      queryClient.invalidateQueries({ queryKey: ['group', groupId] })
     },
   })
 
@@ -158,7 +158,7 @@ const Form = () => {
 
           <Divider></Divider>
 
-          {id ? <UserList groupId={id} /> : null}
+          {groupId ? <UserList groupId={groupId} /> : null}
         </Stack>
 
         <Outlet />

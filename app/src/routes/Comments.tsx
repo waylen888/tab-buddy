@@ -10,11 +10,11 @@ import dayjs from "dayjs";
 import { DRAWER_WIDTH } from "../components/NavBar";
 
 const Comments = () => {
-  const { id } = useParams<{ id: string }>()
+  const { expenseId } = useParams<{ expenseId: string }>()
   const { data, isLoading } = useQuery({
-    queryKey: ["expense", id, "comments"],
+    queryKey: ["expense", expenseId, "comments"],
     queryFn: () => {
-      return authFetch<Comment[]>(`/api/expense/${id}/comments`)
+      return authFetch<Comment[]>(`/api/expense/${expenseId}/comments`)
     },
   })
   return (
@@ -23,7 +23,7 @@ const Comments = () => {
       {
         data?.map((comment) => {
           return (
-            <Paper sx={{ p: 1 }} elevation={2}>
+            <Paper key={comment.id} sx={{ p: 1 }} elevation={2}>
               <Stack gap={1}>
                 <Typography variant="h6" sx={{ color: "primary.main" }}>
                   {comment.displayName}
@@ -66,21 +66,21 @@ interface CommentPostFormValues {
   content: string
 }
 const CommentPostForm = () => {
-  const { id } = useParams<{ id: string }>()
+  const { expenseId } = useParams<{ expenseId: string }>()
   const queryClient = useQueryClient();
   const { mutateAsync, isPending } = useMutation({
     mutationFn: (values: CommentPostFormValues) => {
-      return authFetch(`/api/expense/${id}/comment`, {
+      return authFetch(`/api/expense/${expenseId}/comment`, {
         method: "POST",
         body: JSON.stringify({
-          expenseId: id,
+          expenseId: expenseId,
           content: values.content,
         })
       })
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["expense", id, "comments"]
+        queryKey: ["expense", expenseId, "comments"]
       });
     }
   })

@@ -10,7 +10,7 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs, { Dayjs } from "dayjs";
 import { LoadingButton } from "@mui/lab";
 import CloseIcon from '@mui/icons-material/Close';
-import { Currency, User } from "../model";
+import { Currency, ExpenseWithSplitUsers, User } from "../model";
 import { useEffect } from "react";
 import { useAuth } from "../components/AuthProvider";
 import NumericFormatCustom from "../components/NumericFormat";
@@ -24,7 +24,6 @@ interface ExpenseFormValues {
   date: Dayjs;
   category: string;
   currency: Currency;
-  allocationMethod: string
   splitUsers: SplitUser[];
   payerId: string;
 }
@@ -34,16 +33,44 @@ interface SplitUser extends User {
   // paid: boolean;
 }
 
-export default function ExpenseDialog() {
+export default function ExpenseEditDialog() {
   const navigate = useNavigate()
-  const { id: groupId } = useParams<{ id: string }>()
+  const { groupId, expenseId } = useParams<{ groupId: string; expenseId: string }>()
   const { enqueueSnackbar } = useSnackbar()
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['expense', expenseId],
+    queryFn: () => {
+      return authFetch<ExpenseWithSplitUsers>(`/api/expense/${expenseId}`)
+    }
+  })
+
   const methods = useForm<ExpenseFormValues>({})
+
+  useEffect(() => {
+    if (data) {
+      methods.reset({
+        description: data.description,
+        amount: data.amount,
+        date: dayjs(data.date),
+        category: data.category,
+        currency: data.currency,
+        splitUsers: data.splitUsers.map((user) => ({
+          ...user,
+          // owed: user.id !== data.payerId,
+        })),
+        payerId: data.splitUsers.find(user => user.paid).id,
+      })
+    }
+  }, [data, methods.reset])
+
+
+
 
   const queryClient = useQueryClient()
   const { mutateAsync, isPending } = useMutation({
     mutationFn: async (values: ExpenseFormValues) => {
-      return authFetch(`/api/group/${groupId}/expense`, {
+      return authFetch(`/api/expense/${expenseId}`, {
         method: 'POST',
         body: JSON.stringify({
           description: values.description,
@@ -83,8 +110,12 @@ export default function ExpenseDialog() {
   const theme = useTheme()
   const fullScreen = useMediaQuery(theme.breakpoints.down('md'));
 
-  return (
+  if (isLoading) {
+    return <CircularProgress />
+  }
 
+
+  return (
     <Dialog open fullScreen={fullScreen}>
       <DialogTitle>
         Expense
@@ -252,17 +283,7 @@ const PaymentOptions: React.FC<{
             <TableCell padding="checkbox"></TableCell>
             <TableCell>Name</TableCell>
             <TableCell>
-              <Controller
-                name="allocationMethod"
-                control={control}
-                defaultValue="equally"
-                render={({ field }) => (
-                  <Select {...field} size="small">
-                    <MenuItem value="equally">Equally</MenuItem>
-                    <MenuItem value="percentage">Percentage</MenuItem>
-                  </Select>
-                )}
-              />
+              Amount
             </TableCell>
             <TableCell padding="checkbox">
               Paid?

@@ -1,6 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import { RouterProvider, createBrowserRouter, useLocation } from 'react-router-dom';
+import { Outlet, RouterProvider, createBrowserRouter, useLocation } from 'react-router-dom';
 import Layout from './routes/Layout';
 import Groups from './routes/Groups';
 import Group from './routes/Group';
@@ -8,7 +8,7 @@ import Login from './routes/Login';
 
 import './index.css'
 import '@fontsource/inter';
-import ExpenseDialog from './routes/ExpenseDialog';
+import ExpenseCreateDialog from './routes/ExpenseCreateDialog';
 import QueryClientProvider from './components/QueryClientProvider';
 
 import { SnackbarProvider } from 'notistack';
@@ -18,6 +18,7 @@ import InviteDialog from './routes/InviteDialog';
 import Expense from './routes/Expense';
 import GroupSettingDialog from './routes/GroupSettingDialog';
 import SetToken from './routes/SetToken';
+import ExpenseEditDialog from './routes/ExpenseEditDialog';
 
 
 const router = createBrowserRouter([
@@ -46,28 +47,39 @@ const router = createBrowserRouter([
         ],
       },
       {
-        path: "group/:id",
-        element: <Group />,
+        path: "group/:groupId",
         children: [
           {
-            path: "create/expense",
-            element: <ExpenseDialog />
-          },
-          {
-            path: "setting",
-            element: <GroupSettingDialog />,
+            path: "",
+            element: <Group />,
             children: [
               {
-                path: "invite",
-                element: <InviteDialog />
+                path: "create/expense",
+                element: <ExpenseCreateDialog />
+              },
+              {
+                path: "setting",
+                element: <GroupSettingDialog />,
+                children: [
+                  {
+                    path: "invite",
+                    element: <InviteDialog />
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            path: "expense/:expenseId",
+            element: <Expense />,
+            children: [
+              {
+                path: "edit",
+                element: <ExpenseEditDialog />
               },
             ],
           },
         ],
-      },
-      {
-        path: "/expense/:id",
-        element: <Expense />
       },
     ],
   },

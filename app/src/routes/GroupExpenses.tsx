@@ -68,7 +68,7 @@ const GroupExpenses: React.FC<{
                       key={expense.id}
                       sx={{ cursor: "pointer" }}
                       onClick={() => {
-                        navigate(`/expense/${expense.id}`)
+                        navigate(`expense/${expense.id}`)
                       }}
                       hover
                     >

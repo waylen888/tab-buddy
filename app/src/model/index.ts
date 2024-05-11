@@ -12,6 +12,7 @@ export interface Expense {
   description: string
   date: string
   category: string
+  currency: Currency
   createAt: string
   updateAt: string
   createdBy: User
