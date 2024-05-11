@@ -35,7 +35,10 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
-        runtimeCaching: [],
+        runtimeCaching: [{
+          urlPattern: /.*\/(api|google).*/,
+          handler: 'NetworkOnly',
+        }],
       },
     }),
   ],
