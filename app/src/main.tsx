@@ -22,20 +22,12 @@ import SetToken from './routes/SetToken';
 
 const router = createBrowserRouter([
   {
-    path: "google/oauth/login",
-    element: <div>Redirecting...</div>
-  },
-  {
     path: "/login",
     element: <Login />
   },
   {
     path: "/set-token",
     element: <SetToken />
-  },
-  {
-    path: "*",
-    element: <div>404</div>
   },
   {
     path: "/",
