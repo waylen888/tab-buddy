@@ -13,7 +13,7 @@ import QueryClientProvider from './components/QueryClientProvider';
 
 import { SnackbarProvider } from 'notistack';
 import GroupDialog from './routes/GroupDialog';
-import { CssBaseline, GlobalStyles, ThemeProvider, createTheme } from '@mui/material';
+import { Button, CssBaseline, GlobalStyles, ThemeProvider, createTheme } from '@mui/material';
 import InviteDialog from './routes/InviteDialog';
 import Expense from './routes/Expense';
 import GroupSettingDialog from './routes/GroupSettingDialog';
@@ -114,7 +114,10 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       /> */}
       <QueryClientProvider>
         <SnackbarProvider dense anchorOrigin={{ vertical: "top", horizontal: "center" }}>
-          <RouterProvider router={router} fallbackElement={null} />
+          <Button onClick={() => {
+            window.location.href = "/api/aaaaaaaa"
+          }}>Click</Button>
+          {/* <RouterProvider router={router} fallbackElement={null} /> */}
         </SnackbarProvider>
       </QueryClientProvider>
     </ThemeProvider>
