@@ -30,5 +30,11 @@ func New(cfgPath string) (Config, error) {
 	}
 	defer file.Close()
 	var cfg Config
-	return cfg, toml.NewDecoder(file).Decode(&cfg)
+	if err := toml.NewDecoder(file).Decode(&cfg); err != nil {
+		return Config{}, err
+	}
+	if cfg.HTTPSetting.Listen == "" {
+		cfg.HTTPSetting.Listen = ":8080"
+	}
+	return cfg, nil
 }

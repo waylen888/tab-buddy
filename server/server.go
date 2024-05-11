@@ -50,6 +50,8 @@ func (s *Server) Run(ctx context.Context, httpSetting config.HTTPSetting) error 
 	authRoute.POST("/api/group/:id/invite", s.handler.inviteUserToGroup)
 	authRoute.GET("/api/expense/:id", s.handler.getExpense)
 	authRoute.GET("/api/currencies", s.handler.getCurrencies)
+	authRoute.GET("/api/expense/:id/comments", s.handler.getExpenseComments)
+	authRoute.POST("/api/expense/:id/comment", s.handler.createExpenseComment)
 
 	server := http.Server{
 		Addr:    httpSetting.Listen,

@@ -522,3 +522,50 @@ func (h *APIHandler) noRoute(ctx *gin.Context) {
 	}
 	ctx.Data(http.StatusOK, ctype, data)
 }
+
+func (h *APIHandler) getExpenseComments(ctx *gin.Context) {
+	cs, err := h.db.GetExpenseComments(ctx.Param("id"))
+	if err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+	ctx.JSON(http.StatusOK, lo.Map(cs, func(c entity.Comment, _ int) model.Comment {
+		return model.Comment{
+			ID:          c.ID,
+			Content:     c.Content,
+			CreateBy:    c.CreateBy,
+			DisplayName: c.DisplayName,
+			CreateAt:    c.CreateAt,
+			UpdateAt:    c.UpdateAt,
+		}
+	}))
+}
+
+func (h *APIHandler) createExpenseComment(ctx *gin.Context) {
+	var req struct {
+		ExpenseID string `json:"expenseId" binding:"required"`
+		Content   string `json:"content" binding:"required"`
+	}
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	comment, err := h.db.CreateComment(entity.CreateCommentArguments{
+		ExpenseID: req.ExpenseID,
+		Content:   req.Content,
+		CreateBy:  GetUser(ctx).ID,
+	})
+	if err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+	ctx.JSON(http.StatusOK, model.Comment{
+		ID:          comment.ID,
+		Content:     comment.Content,
+		CreateBy:    comment.CreateBy,
+		DisplayName: comment.DisplayName,
+		CreateAt:    comment.CreateAt,
+		UpdateAt:    comment.UpdateAt,
+	})
+}

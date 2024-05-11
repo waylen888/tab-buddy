@@ -50,3 +50,12 @@ export interface Currency {
   decimalDigits: number
   rounding: number
 }
+
+export interface Comment {
+  id: string
+  content: string
+  createBy: string
+  displayName: string
+  createAt: string
+  updateAt: string
+}

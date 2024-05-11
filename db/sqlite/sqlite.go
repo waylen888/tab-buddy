@@ -169,4 +169,16 @@ CREATE TABLE IF NOT EXISTS "user_expense" (
 	FOREIGN KEY("expense_id") REFERENCES "expense"("id") ON DELETE CASCADE,
   PRIMARY KEY("user_id", "expense_id")
 );`),
+	lo.T2("expense_comment", `
+CREATE TABLE IF NOT EXISTS "expense_comment" (
+	"id"	TEXT NOT NULL,
+	"expense_id"	TEXT NOT NULL,
+	"content"	TEXT NOT NULL,
+	"create_by"	TEXT NOT NULL,
+	"create_at"	DATETIME NOT NULL,
+	"update_at"	DATETIME NOT NULL,
+	FOREIGN KEY("expense_id") REFERENCES "expense"("id") ON DELETE CASCADE,
+	PRIMARY KEY("id"),
+	FOREIGN KEY("create_by") REFERENCES "user"("id")
+);`),
 }

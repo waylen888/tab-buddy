@@ -52,6 +52,7 @@ func (h *GoogleHandler) Login(ctx *gin.Context) {
 
 func (h *GoogleHandler) Callback(ctx *gin.Context) {
 	code := ctx.Query("code")
+	slog.Info("google callback", "code", code)
 	token, err := h.cfg.Exchange(ctx.Request.Context(), code)
 	if err != nil {
 		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

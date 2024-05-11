@@ -2,8 +2,9 @@ import { useQuery } from "@tanstack/react-query"
 import { useParams } from "react-router-dom"
 import { authFetch } from "../hooks/api"
 import { ExpenseWithSplitUsers } from "../model"
-import { CircularProgress, Typography } from "@mui/material"
+import { CircularProgress, Divider, Stack, Typography } from "@mui/material"
 import dayjs from "dayjs"
+import Comments from "./Comments"
 
 const Expense = () => {
   const { id } = useParams<{ id: string }>()
@@ -19,14 +20,17 @@ const Expense = () => {
   }
 
   return (
-    <div>
-      <h3>{data?.description}</h3>
-      <h2>{data?.amount}</h2>
-      <Typography>
-        Added by {data?.createdBy?.displayName} on {dayjs(data?.createAt).format("YYYY/MM/DD")}
-      </Typography>
-      {JSON.stringify(data)}
-    </div>
+    <Stack gap={2}>
+      <Stack sx={{ p: 1 }}>
+        <Typography variant="h4">{data?.description}</Typography>
+        <Typography>{data?.amount}</Typography>
+        <Typography variant="caption">
+          Added by {data?.createdBy?.displayName} on {dayjs(data?.createAt).format("YYYY/MM/DD")}
+        </Typography>
+      </Stack>
+      <Divider />
+      <Comments />
+    </Stack >
   )
 }
 
