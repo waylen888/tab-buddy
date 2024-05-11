@@ -295,6 +295,7 @@ func (h *APIHandler) createExpense(ctx *gin.Context) {
 		Date         time.Time   `json:"date" binding:"required"`
 		CurrencyCode string      `json:"currencyCode" binding:"required"`
 		Category     string      `json:"category"`
+		Note         string      `json:"note"`
 		SplitUsers   []SplitUser `json:"splitUsers" binding:"required,gt=0"`
 	}
 	if err := ctx.ShouldBindJSON(&req); err != nil {
@@ -325,6 +326,7 @@ func (h *APIHandler) createExpense(ctx *gin.Context) {
 		Description:  req.Description,
 		Date:         req.Date,
 		CurrencyCode: req.CurrencyCode,
+		Note:         req.Note,
 		Category:     req.Category,
 		SplitUsers: lo.Map(req.SplitUsers, func(user SplitUser, _ int) entity.SplitUser {
 			return entity.SplitUser{

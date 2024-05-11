@@ -10,6 +10,7 @@ type Expense struct {
 	CurrencyCode string    `db:"currency_code"`
 	Category     string    `db:"category"`
 	TWDRate      string    `db:"twd_rate"`
+	Note         string    `db:"note"`
 	CreateAt     time.Time `db:"create_at"`
 	UpdateAt     time.Time `db:"update_at"`
 	CreatedBy    string    `db:"created_by"`
@@ -35,6 +36,7 @@ type CreateExpenseArguments struct {
 	Date           time.Time
 	CurrencyCode   string
 	Category       string
+	Note           string
 	SplitUsers     []SplitUser
 	CreateByUserID string
 }

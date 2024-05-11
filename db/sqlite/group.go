@@ -194,6 +194,7 @@ func (s *sqlite) CreateExpense(args entity.CreateExpenseArguments) (entity.Expen
 		CurrencyCode: currency.Code,
 		Category:     args.Category,
 		TWDRate:      args.TWDRate,
+		Note:         args.Note,
 		CreateAt:     time.Now(),
 		CreatedBy:    args.CreateByUserID,
 	}
@@ -205,8 +206,8 @@ func (s *sqlite) CreateExpense(args entity.CreateExpenseArguments) (entity.Expen
 
 	_, err = tx.ExecContext(
 		ctx,
-		`INSERT INTO expense (id, amount, description, date, currency_code, category, twd_rate, create_at, update_at, created_by) 
-		VALUES (@id, @amount, @description, @date, @currency_code, @category, @twd_rate, @create_at, @update_at, @created_by)`,
+		`INSERT INTO expense (id, amount, description, date, currency_code, category, twd_rate, note, create_at, update_at, created_by) 
+		VALUES (@id, @amount, @description, @date, @currency_code, @category, @twd_rate, @note, @create_at, @update_at, @created_by)`,
 		sql.Named("id", expense.ID),
 		sql.Named("amount", expense.Amount),
 		sql.Named("description", expense.Description),
@@ -214,6 +215,7 @@ func (s *sqlite) CreateExpense(args entity.CreateExpenseArguments) (entity.Expen
 		sql.Named("currency_code", expense.CurrencyCode),
 		sql.Named("category", expense.Category),
 		sql.Named("twd_rate", expense.TWDRate),
+		sql.Named("note", expense.Note),
 		sql.Named("create_at", expense.CreateAt),
 		sql.Named("update_at", expense.UpdateAt),
 		sql.Named("created_by", expense.CreatedBy),
