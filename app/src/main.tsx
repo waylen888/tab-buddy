@@ -1,6 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import { RouterProvider, createBrowserRouter } from 'react-router-dom';
+import { RouterProvider, createBrowserRouter, useLocation } from 'react-router-dom';
 import Layout from './routes/Layout';
 import Groups from './routes/Groups';
 import Group from './routes/Group';
@@ -19,8 +19,16 @@ import Expense from './routes/Expense';
 import GroupSettingDialog from './routes/GroupSettingDialog';
 import SetToken from './routes/SetToken';
 
+// 自定義一個 ServerSideRoute 元件來處理 server-side 的路由
+const ServerSideRoute = ({ }) => {
+  return null
+};
 
 const router = createBrowserRouter([
+  {
+    path: "/aaaaa",
+    element: <ServerSideRoute />
+  },
   {
     path: "/login",
     element: <Login />
@@ -29,6 +37,7 @@ const router = createBrowserRouter([
     path: "/set-token",
     element: <SetToken />
   },
+
   {
     path: "/",
     element: <Layout />,
