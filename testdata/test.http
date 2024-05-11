@@ -1,2 +1,8 @@
 
 GET https://api.finmindtrade.com/api/v3/data?dataset=TaiwanExchangeRate&data_id=EUR&date=2024-05-08 HTTP/1.1
+
+###
+GET https://tabbud.ddns.net/google/oauth/login HTTP/1.1
+
+###
+GET https://tabbud.ddns.net/google/oauth/callback HTTP/1.1
