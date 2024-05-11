@@ -41,6 +41,7 @@ export interface Category {
 const transportationColor = "#996666"
 const foodAndDrinkColor = "#669966"
 const lifeColor = "#666699"
+const entertainmentColor = "#996699"
 
 export const CATEGORIES = [
   {
@@ -75,11 +76,11 @@ export const CATEGORIES = [
   {
     title: "Entertainment",
     subCategories: [
-      { key: "games", name: "Games", icon: <SportsEsportsIcon htmlColor={foodAndDrinkColor} /> },
-      { key: "movies", name: "Movies", icon: <TheaterComedyIcon htmlColor={foodAndDrinkColor} /> },
-      { key: "music", name: "Music", icon: <AudiotrackIcon htmlColor={foodAndDrinkColor} /> },
-      { key: "sports", name: "Sports", icon: <SportsFootballIcon htmlColor={foodAndDrinkColor} /> },
-      { key: "entertainment_other", name: "Other", icon: <ConfirmationNumberIcon htmlColor={foodAndDrinkColor} /> },
+      { key: "games", name: "Games", icon: <SportsEsportsIcon htmlColor={entertainmentColor} /> },
+      { key: "movies", name: "Movies", icon: <TheaterComedyIcon htmlColor={entertainmentColor} /> },
+      { key: "music", name: "Music", icon: <AudiotrackIcon htmlColor={entertainmentColor} /> },
+      { key: "sports", name: "Sports", icon: <SportsFootballIcon htmlColor={entertainmentColor} /> },
+      { key: "entertainment_other", name: "Other", icon: <ConfirmationNumberIcon htmlColor={entertainmentColor} /> },
     ],
   },
   {
