@@ -8,12 +8,19 @@ import (
 
 type Config struct {
 	GoogleOAuth GoogleOAuth `toml:"google_oauth"`
+	HTTPSetting HTTPSetting `toml:"http_setting"`
 }
 
 type GoogleOAuth struct {
 	ClientID     string `toml:"client_id"`
 	ClientSecret string `toml:"client_secret"`
 	RedirectURL  string `toml:"redirect_url"`
+}
+
+type HTTPSetting struct {
+	Listen       string `toml:"listen"`
+	CertFilePath string `toml:"cert_filepath"`
+	KeyFilePath  string `toml:"key_filepath"`
 }
 
 func New(cfgPath string) (Config, error) {

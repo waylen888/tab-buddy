@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/waylen888/tab-buddy/config"
@@ -21,7 +22,7 @@ func New(db db.Database, oauthCfg config.GoogleOAuth) *Server {
 	}
 }
 
-func (s *Server) Run(ctx context.Context, port string) error {
+func (s *Server) Run(ctx context.Context, httpSetting config.HTTPSetting) error {
 	engine := gin.New()
 	engine.Use(gin.Recovery())
 	engine.Use(gin.Logger())
@@ -50,5 +51,12 @@ func (s *Server) Run(ctx context.Context, port string) error {
 	authRoute.GET("/api/expense/:id", s.handler.getExpense)
 	authRoute.GET("/api/currencies", s.handler.getCurrencies)
 
-	return engine.Run(port)
+	server := http.Server{
+		Addr:    httpSetting.Listen,
+		Handler: engine,
+	}
+	if httpSetting.CertFilePath != "" && httpSetting.KeyFilePath != "" {
+		return server.ListenAndServeTLS(httpSetting.CertFilePath, httpSetting.KeyFilePath)
+	}
+	return server.ListenAndServe()
 }

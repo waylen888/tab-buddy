@@ -41,7 +41,7 @@ func main() {
 	g, ctx := errgroup.WithContext(context.Background())
 	g.Go(func() error {
 		server := server.New(db, cfg.GoogleOAuth)
-		return server.Run(ctx, ":8080")
+		return server.Run(ctx, cfg.HTTPSetting)
 	})
 	if err := g.Wait(); err != nil {
 		slog.Error("run server", "error", err)

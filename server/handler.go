@@ -485,7 +485,7 @@ func (h *APIHandler) getCurrencies(ctx *gin.Context) {
 func (h *APIHandler) noRoute(ctx *gin.Context) {
 
 	dir, file := path.Split(ctx.Request.RequestURI)
-	if strings.HasPrefix(dir, "/api") {
+	if strings.HasPrefix(dir, "/api") || strings.HasPrefix(dir, "/google") {
 		ctx.AbortWithStatus(http.StatusNotFound)
 		return
 	}
