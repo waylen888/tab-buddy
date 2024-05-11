@@ -34,7 +34,7 @@ func New(cfgPath string) (Config, error) {
 		return Config{}, err
 	}
 	if cfg.HTTPSetting.Listen == "" {
-		cfg.HTTPSetting.Listen = ":8080"
+		cfg.HTTPSetting.Listen = ":8081"
 	}
 	return cfg, nil
 }

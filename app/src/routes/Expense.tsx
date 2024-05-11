@@ -1,10 +1,11 @@
 import { useQuery } from "@tanstack/react-query"
-import { Link, Outlet, useParams } from "react-router-dom"
+import { Link, Outlet, useNavigate, useParams } from "react-router-dom"
 import { authFetch } from "../hooks/api"
 import { ExpenseWithSplitUsers } from "../model"
-import { CircularProgress, Divider, Stack, Typography } from "@mui/material"
+import { CircularProgress, Divider, IconButton, Stack, Typography } from "@mui/material"
 import dayjs from "dayjs"
 import Comments from "./Comments"
+import ModeEditIcon from '@mui/icons-material/ModeEdit';
 
 const Expense = () => {
   const { expenseId } = useParams<{ expenseId: string }>()
@@ -15,6 +16,8 @@ const Expense = () => {
     }
   })
 
+  const navigate = useNavigate();
+
   if (isLoading) {
     return <CircularProgress />
   }
@@ -22,8 +25,13 @@ const Expense = () => {
   return (
     <Stack gap={2}>
       <Stack sx={{ p: 1 }}>
-        <Typography variant="h4">{data?.description}</Typography>
-        <Link to="edit">Edit</Link>
+        <Stack direction="row" gap={2}>
+          <Typography variant="h4">{data?.description}</Typography>
+          <IconButton onClick={() => navigate("edit")}>
+            <ModeEditIcon />
+          </IconButton>
+        </Stack>
+
         <Typography>{data?.amount}</Typography>
         <Typography variant="caption">
           Added by {data?.createdBy?.displayName} on {dayjs(data?.createAt).format("YYYY/MM/DD")}

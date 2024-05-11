@@ -160,7 +160,8 @@ func (s *sqlite) GetExpense(ID string) (entity.ExpenseWithSplitUser, error) {
 
 	if err := sqlscan.Get(
 		ctx, s.rwDB, &expense,
-		`SELECT id, amount, description, date, create_at, update_at, created_by
+		`SELECT 
+		id, amount, description, date, currency_code, category, twd_rate, note, create_at, update_at, created_by
 		FROM expense
 		WHERE id = @id`,
 		sql.Named("id", ID),
@@ -229,6 +230,88 @@ func (s *sqlite) CreateExpense(args entity.CreateExpenseArguments) (entity.Expen
 	)
 	if err != nil {
 		return expense, err
+	}
+
+	for _, user := range args.SplitUsers {
+		_, err = tx.ExecContext(
+			ctx,
+			`INSERT INTO user_expense(user_id, expense_id, type, amount, paid, owed) 
+			VALUES (@user_id, @expense_id, @type, @amount, @paid, @owed)`,
+			sql.Named("user_id", user.ID),
+			sql.Named("expense_id", expense.ID),
+			sql.Named("type", 0),
+			sql.Named("amount",
+				calc.SplitValue(expense.Amount, lo.Map(args.SplitUsers, func(su entity.SplitUser, _ int) calc.SplitUser {
+					return calc.SplitUser{
+						ID:   su.ID,
+						Paid: su.Paid,
+						Owed: su.Owed,
+					}
+				}), user.ID).StringFixed(int32(currency.DecimalDigits)),
+			),
+			sql.Named("paid", user.Paid),
+			sql.Named("owed", user.Owed),
+		)
+		if err != nil {
+			return expense, err
+		}
+	}
+	return expense, tx.Commit()
+}
+
+func (s *sqlite) UpdateExpense(args entity.UpdateExpenseArguments) (entity.Expense, error) {
+	ctx, cancel := context.WithTimeout(context.TODO(), s.timeout)
+	defer cancel()
+
+	currency, err := s.GetCurrency(args.CurrencyCode)
+	if err != nil {
+		return entity.Expense{}, err
+	}
+	var expense entity.Expense
+	tx, err := s.rwDB.BeginTx(ctx, nil)
+	if err != nil {
+		return entity.Expense{}, err
+	}
+	defer tx.Rollback()
+
+	err = sqlscan.Get(
+		ctx,
+		tx,
+		&expense,
+		`
+		UPDATE expense 
+		SET amount = @amount,
+				description = @description,
+				date = @date,
+				currency_code = @currency_code,
+				category = @category,
+				twd_rate = @twd_rate,
+				note = @note,
+				update_at = @update_at
+		WHERE id = @id
+		RETURNING *;
+	`,
+		sql.Named("id", args.ExpenseID),
+		sql.Named("amount", args.Amount),
+		sql.Named("description", args.Description),
+		sql.Named("date", args.Date),
+		sql.Named("currency_code", args.CurrencyCode),
+		sql.Named("category", args.Category),
+		sql.Named("twd_rate", args.TWDRate),
+		sql.Named("note", args.Note),
+		sql.Named("update_at", time.Now()),
+	)
+	if err != nil {
+		return entity.Expense{}, err
+	}
+
+	_, err = tx.ExecContext(
+		ctx,
+		`DELETE FROM user_expense WHERE expense_id = @expense_id`,
+		sql.Named("expense_id", args.ExpenseID),
+	)
+	if err != nil {
+		return entity.Expense{}, err
 	}
 
 	for _, user := range args.SplitUsers {

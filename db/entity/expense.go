@@ -40,3 +40,16 @@ type CreateExpenseArguments struct {
 	SplitUsers     []SplitUser
 	CreateByUserID string
 }
+
+type UpdateExpenseArguments struct {
+	GroupID      string
+	ExpenseID    string
+	Amount       string
+	TWDRate      string
+	Description  string
+	Date         time.Time
+	CurrencyCode string
+	Category     string
+	Note         string
+	SplitUsers   []SplitUser
+}

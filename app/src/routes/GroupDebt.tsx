@@ -16,7 +16,7 @@ const GroupDebt: React.FC<{
     }
 
     const paidUser = expense.splitUsers.find(u => u.paid);
-    console.debug(`expense`, expense.description, `found paid user`, paidUser.displayName)
+    // console.debug(`expense`, expense.description, `found paid user`, paidUser.displayName)
     if (paidUser.id === me.id) {
       pv[expense.currency.code] = expense.splitUsers.filter(user => user.id !== me.id).reduce((pv, cv, _, splitUsers) => {
         if (!pv.debtor[cv.id]) {

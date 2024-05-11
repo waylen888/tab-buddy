@@ -20,6 +20,7 @@ type Database interface {
 	GetGroupExpenses(groupID string) ([]entity.ExpenseWithSplitUser, error)
 	GetExpense(ID string) (entity.ExpenseWithSplitUser, error)
 	CreateExpense(arg entity.CreateExpenseArguments) (entity.Expense, error)
+	UpdateExpense(arg entity.UpdateExpenseArguments) (entity.Expense, error)
 
 	GetCurrency(code string) (entity.Currency, error)
 	GetCurrencies() ([]entity.Currency, error)

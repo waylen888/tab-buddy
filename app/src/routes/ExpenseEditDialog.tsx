@@ -1,7 +1,7 @@
-import { Autocomplete, Checkbox, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, InputAdornment, MenuItem, Radio, Select, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography, darken, lighten, styled, useMediaQuery, useTheme } from "@mui/material";
+import { Autocomplete, Checkbox, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, InputAdornment, Radio, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography, darken, lighten, styled, useMediaQuery, useTheme } from "@mui/material";
 import { Controller, FormProvider, useForm, useFormContext } from "react-hook-form";
 import { useNavigate, useParams } from "react-router-dom";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSnackbar } from "notistack";
 import { authFetch } from "../hooks/api";
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -12,7 +12,7 @@ import { LoadingButton } from "@mui/lab";
 import CloseIcon from '@mui/icons-material/Close';
 import { Currency, ExpenseWithSplitUsers, User } from "../model";
 import { useEffect } from "react";
-import { useAuth } from "../components/AuthProvider";
+
 import NumericFormatCustom from "../components/NumericFormat";
 import FormattedAmount from "../components/FormattedAmount";
 import { CATEGORIES, getCategory, getCategoryGroup } from "../components/CategoryIcon";
@@ -37,32 +37,42 @@ export default function ExpenseEditDialog() {
   const navigate = useNavigate()
   const { groupId, expenseId } = useParams<{ groupId: string; expenseId: string }>()
   const { enqueueSnackbar } = useSnackbar()
-
-  const { data, isLoading } = useQuery({
-    queryKey: ['expense', expenseId],
-    queryFn: () => {
-      return authFetch<ExpenseWithSplitUsers>(`/api/expense/${expenseId}`)
-    }
+  const [
+    { data, isLoading },
+    { data: users },
+  ] = useQueries({
+    queries: [
+      {
+        queryKey: ['expense', expenseId],
+        queryFn: () => {
+          return authFetch<ExpenseWithSplitUsers>(`/api/expense/${expenseId}`)
+        }
+      },
+      {
+        queryKey: ['group', groupId, 'members'],
+        queryFn: () => authFetch<User[]>(`/api/group/${groupId}/members`),
+      }
+    ]
   })
 
   const methods = useForm<ExpenseFormValues>({})
 
   useEffect(() => {
-    if (data) {
+    if (data && users) {
       methods.reset({
         description: data.description,
         amount: data.amount,
         date: dayjs(data.date),
         category: data.category,
         currency: data.currency,
-        splitUsers: data.splitUsers.map((user) => ({
+        splitUsers: users.map((user) => ({
           ...user,
-          // owed: user.id !== data.payerId,
+          owed: data.splitUsers.find(user1 => user1.id === user.id)?.owed ?? false,
         })),
         payerId: data.splitUsers.find(user => user.paid).id,
       })
     }
-  }, [data, methods.reset])
+  }, [data, users, methods.reset])
 
 
 
@@ -70,8 +80,8 @@ export default function ExpenseEditDialog() {
   const queryClient = useQueryClient()
   const { mutateAsync, isPending } = useMutation({
     mutationFn: async (values: ExpenseFormValues) => {
-      return authFetch(`/api/expense/${expenseId}`, {
-        method: 'POST',
+      return authFetch(`/api/group/${groupId}/expense/${expenseId}`, {
+        method: 'PUT',
         body: JSON.stringify({
           description: values.description,
           amount: values.amount,
@@ -89,6 +99,9 @@ export default function ExpenseEditDialog() {
       queryClient.invalidateQueries({
         queryKey: ['group', groupId, 'expenses']
       })
+      queryClient.invalidateQueries({
+        queryKey: ['expense', expenseId]
+      })
     },
   })
 
@@ -97,7 +110,7 @@ export default function ExpenseEditDialog() {
       console.debug(`submit`, values)
       await mutateAsync(values)
       navigate(-1)
-      enqueueSnackbar(`expense created`, { variant: 'success' })
+      enqueueSnackbar(`expense updated`, { variant: 'success', autoHideDuration: 2000 })
     } catch (err) {
       enqueueSnackbar((err as Error).message, { variant: 'error' })
     } finally {
@@ -167,7 +180,7 @@ export default function ExpenseEditDialog() {
                   </LocalizationProvider>
                 )}
               />
-              {groupId ? <PaymentOptions groupId={groupId} /> : null}
+              <PaymentOptions />
             </Stack>
           </DialogContent>
           <DialogActions>
@@ -176,7 +189,7 @@ export default function ExpenseEditDialog() {
               loading={methods.formState.isSubmitting}
               disabled={methods.formState.isSubmitting || !methods.formState.isValid || isPending}
             >
-              Create
+              Update
             </LoadingButton>
           </DialogActions>
         </form>
@@ -254,26 +267,8 @@ const AmountField = () => {
 
 
 const PaymentOptions: React.FC<{
-  groupId: string
-}> = ({ groupId }) => {
-  const { watch, setValue, control } = useFormContext<ExpenseFormValues>()
-  const { data } = useQuery({
-    queryKey: ['group', groupId, 'members'],
-    queryFn: () => authFetch<User[]>(`/api/group/${groupId}/members`),
-  })
-  const { user: me } = useAuth();
-  useEffect(() => {
-    if (data) {
-      const splitUsers = data.map((user) => ({
-        ...user,
-        owed: true,
-      }))
-      console.debug(`splitUsers`, splitUsers)
-      setValue("splitUsers", splitUsers)
-      setValue("payerId", me.id)
-    }
-  }, [data, me]);
-
+}> = () => {
+  const { watch, control } = useFormContext<ExpenseFormValues>()
   const amount = Number(watch("amount") || "0")
   return (
     <TableContainer>
@@ -369,7 +364,7 @@ const CategoryField = () => {
               ...params.InputProps,
               startAdornment: (
                 <InputAdornment position="start">
-                  {getCategory(field.value).icon}
+                  {getCategory(field.value)?.icon}
                 </InputAdornment>
               ),
             }}

@@ -313,6 +313,13 @@ func (h *APIHandler) createExpense(ctx *gin.Context) {
 		return
 	}
 
+	if owedCount := lo.CountBy(req.SplitUsers, func(user SplitUser) bool {
+		return user.Owed
+	}); owedCount == 0 {
+		ctx.AbortWithError(http.StatusBadRequest, fmt.Errorf("no one owed"))
+		return
+	}
+
 	rate, err := h.rateGetter.GetExchangeRate(req.CurrencyCode)
 	if err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
@@ -336,6 +343,83 @@ func (h *APIHandler) createExpense(ctx *gin.Context) {
 			}
 		}),
 		CreateByUserID: GetUser(ctx).ID,
+	})
+	if err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+	ctx.JSON(http.StatusOK, model.Expense{
+		ID:          expense.ID,
+		Amount:      expense.Amount,
+		Description: expense.Description,
+		Date:        expense.Date,
+		Category:    expense.Category,
+		TWDRate:     expense.TWDRate,
+		CreateAt:    expense.CreateAt,
+		UpdateAt:    expense.UpdateAt,
+	})
+}
+
+func (h *APIHandler) updateExpense(ctx *gin.Context) {
+	type SplitUser struct {
+		ID   string `json:"id"`
+		Paid bool   `json:"paid"`
+		Owed bool   `json:"owed"`
+	}
+	var req struct {
+		Amount       string      `json:"amount" binding:"required"`
+		Description  string      `json:"description" binding:"required"`
+		Date         time.Time   `json:"date" binding:"required"`
+		CurrencyCode string      `json:"currencyCode" binding:"required"`
+		Category     string      `json:"category"`
+		Note         string      `json:"note"`
+		SplitUsers   []SplitUser `json:"splitUsers" binding:"required,gt=0"`
+	}
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	if paidCount := lo.CountBy(req.SplitUsers, func(user SplitUser) bool {
+		return user.Paid
+	}); paidCount == 0 {
+		ctx.AbortWithError(http.StatusBadRequest, fmt.Errorf("no one paid"))
+		return
+	} else if paidCount > 1 {
+		ctx.AbortWithError(http.StatusBadRequest, fmt.Errorf("more than one paid"))
+		return
+	}
+
+	if owedCount := lo.CountBy(req.SplitUsers, func(user SplitUser) bool {
+		return user.Owed
+	}); owedCount == 0 {
+		ctx.AbortWithError(http.StatusBadRequest, fmt.Errorf("no one owed"))
+		return
+	}
+
+	rate, err := h.rateGetter.GetExchangeRate(req.CurrencyCode)
+	if err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	expense, err := h.db.UpdateExpense(entity.UpdateExpenseArguments{
+		GroupID:      ctx.Param("id"),
+		ExpenseID:    ctx.Param("expense_id"),
+		Amount:       req.Amount,
+		TWDRate:      rate.String(),
+		Description:  req.Description,
+		Date:         req.Date,
+		CurrencyCode: req.CurrencyCode,
+		Note:         req.Note,
+		Category:     req.Category,
+		SplitUsers: lo.Map(req.SplitUsers, func(user SplitUser, _ int) entity.SplitUser {
+			return entity.SplitUser{
+				User: entity.User{ID: user.ID},
+				Paid: user.Paid,
+				Owed: user.Owed,
+			}
+		}),
 	})
 	if err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
@@ -428,6 +512,12 @@ func (h *APIHandler) getExpense(ctx *gin.Context) {
 		return
 	}
 
+	currency, err := h.db.GetCurrency(expense.CurrencyCode)
+	if err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
 	ctx.JSON(http.StatusOK, model.ExpenseWithSplitUsers{
 		Expense: model.Expense{
 			ID:          expense.ID,
@@ -436,6 +526,7 @@ func (h *APIHandler) getExpense(ctx *gin.Context) {
 			Date:        expense.Date,
 			Category:    expense.Category,
 			TWDRate:     expense.TWDRate,
+			Currency:    model.Currency(currency),
 			CreateAt:    expense.CreateAt,
 			UpdateAt:    expense.UpdateAt,
 			CreatedBy: model.User{
