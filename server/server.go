@@ -31,7 +31,7 @@ func (s *Server) Run(ctx context.Context, httpSetting config.HTTPSetting) error 
 	engine.GET("/google/oauth/login", s.googleHandler.Login)
 	engine.GET("/api/google/oauth/login", s.googleHandler.Login)
 
-	engine.NoRoute(s.handler.noRoute)
+	// engine.NoRoute(s.handler.noRoute)
 
 	engine.POST("/api/auth/login", s.handler.login)
 	engine.GET("/api/auth/refresh_token", jwtTokenCheck(s.handler.db), s.handler.refreshToken)
