@@ -1,13 +1,16 @@
 
 import { Box, CssBaseline, Toolbar, useMediaQuery, useTheme } from '@mui/material'
 import NavBar, { DRAWER_WIDTH } from '../components/NavBar'
-import { Outlet } from 'react-router-dom'
+import { Navigate, Outlet, useLocation } from 'react-router-dom'
 import AuthProvider from '../components/AuthProvider'
 
 function Layout() {
   const theme = useTheme()
   const fullScreen = useMediaQuery(theme.breakpoints.up('md'));
-
+  const { pathname } = useLocation();
+  if (pathname === "/") {
+    return <Navigate to="groups" />
+  }
   return (
     <AuthProvider>
       <CssBaseline />

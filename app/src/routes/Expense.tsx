@@ -6,6 +6,7 @@ import { CircularProgress, Divider, IconButton, Stack, Typography } from "@mui/m
 import dayjs from "dayjs"
 import Comments from "./Comments"
 import ModeEditIcon from '@mui/icons-material/ModeEdit';
+import FormattedAmount from "../components/FormattedAmount"
 
 const Expense = () => {
   const { expenseId } = useParams<{ expenseId: string }>()
@@ -32,7 +33,9 @@ const Expense = () => {
           </IconButton>
         </Stack>
 
-        <Typography>{data?.amount}</Typography>
+        <Typography>
+          <FormattedAmount currency={data.currency} value={data.amount} />
+        </Typography>
         <Typography variant="caption">
           Added by {data?.createdBy?.displayName} on {dayjs(data?.createAt).format("YYYY/MM/DD")}
         </Typography>

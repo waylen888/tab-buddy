@@ -17,3 +17,8 @@ type CreateCommentArguments struct {
 	Content   string
 	CreateBy  string
 }
+
+type DeleteCommentArguments struct {
+	ID     string
+	UserID string
+}

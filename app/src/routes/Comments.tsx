@@ -2,32 +2,70 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
 import { authFetch } from "../hooks/api";
 import { Comment } from "../model";
-import { Box, Divider, Paper, Stack, TextField, Typography, useMediaQuery, useTheme } from "@mui/material";
+import { Box, Divider, IconButton, Paper, Stack, TextField, Typography, useMediaQuery, useTheme } from "@mui/material";
 import { Controller, useForm } from "react-hook-form";
 import { LoadingButton } from "@mui/lab";
 import { useSnackbar } from "notistack";
 import dayjs from "dayjs";
 import { DRAWER_WIDTH } from "../components/NavBar";
+import Linkify from "linkify-react";
+import { useAuth } from "../components/AuthProvider";
+import DeleteIcon from '@mui/icons-material/Delete';
+
 
 const Comments = () => {
   const { expenseId } = useParams<{ expenseId: string }>()
   const { data, isLoading } = useQuery({
     queryKey: ["expense", expenseId, "comments"],
-    queryFn: () => {
-      return authFetch<Comment[]>(`/api/expense/${expenseId}/comments`)
+    queryFn: ({ signal }) => {
+      return authFetch<Comment[]>(`/api/expense/${expenseId}/comments`, { signal })
+    },
+  });
+  const { user: me } = useAuth();
+  const queryClient = useQueryClient();
+  const { mutateAsync } = useMutation({
+    mutationFn: async (commentId: string) => {
+      return authFetch(`/api/expense/${expenseId}/comment/${commentId}`, {
+        method: "DELETE",
+      })
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["expense", expenseId, "comments"],
+      })
     },
   })
+  const handleDelete = (commentId: string) => async () => {
+    try {
+      await mutateAsync(commentId)
+    } catch (err) {
+
+    }
+  }
+
   return (
     <Stack sx={{ p: 1 }} gap={2}>
       <Typography variant="h4">Comments</Typography>
       {
         data?.map((comment) => {
           return (
-            <Paper key={comment.id} sx={{ p: 1 }} elevation={2}>
+            <Paper key={comment.id} sx={{ p: 1 }} elevation={1}>
               <Stack gap={1}>
-                <Typography variant="h6" sx={{ color: "primary.main" }}>
-                  {comment.displayName}
-                </Typography>
+                <Stack direction="row" alignItems="center" justifyContent="space-between">
+                  <Typography variant="h6" sx={{ color: "primary.main" }}>
+                    {comment.displayName}
+                  </Typography>
+                  <IconButton
+                    color="error"
+                    onClick={handleDelete(comment.id)}
+                    sx={{
+                      display: me.id === comment.createBy ? undefined : "none",
+                    }}
+                  >
+                    <DeleteIcon />
+                  </IconButton>
+                </Stack>
+
 
                 <Typography
                   sx={{
@@ -35,7 +73,9 @@ const Comments = () => {
                     wordBreak: "break-all",
                     whiteSpace: "pre-wrap",
                   }}>
-                  {comment.content}
+                  <Linkify>
+                    {comment.content}
+                  </Linkify>
                 </Typography>
 
                 <Typography

@@ -56,3 +56,14 @@ func (s *sqlite) CreateComment(args entity.CreateCommentArguments) (entity.Comme
 	)
 	return comment, err
 }
+
+func (s *sqlite) DeleteComment(args entity.DeleteCommentArguments) error {
+	ctx, cancel := context.WithTimeout(context.Background(), s.timeout)
+	defer cancel()
+	_, err := s.rwDB.ExecContext(ctx,
+		`DELETE FROM expense_comment WHERE id = @id and create_by = @create_by`,
+		sql.Named("id", args.ID),
+		sql.Named("create_by", args.UserID),
+	)
+	return err
+}

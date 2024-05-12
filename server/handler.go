@@ -662,3 +662,15 @@ func (h *APIHandler) createExpenseComment(ctx *gin.Context) {
 		UpdateAt:    comment.UpdateAt,
 	})
 }
+
+func (h *APIHandler) deleteExpenseComment(ctx *gin.Context) {
+	err := h.db.DeleteComment(entity.DeleteCommentArguments{
+		ID:     ctx.Param("comment_id"),
+		UserID: GetUser(ctx).ID,
+	})
+	if err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+	ctx.Status(http.StatusOK)
+}

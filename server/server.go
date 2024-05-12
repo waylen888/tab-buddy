@@ -53,6 +53,7 @@ func (s *Server) Run(ctx context.Context, httpSetting config.HTTPSetting) error 
 	authRoute.GET("/api/currencies", s.handler.getCurrencies)
 	authRoute.GET("/api/expense/:id/comments", s.handler.getExpenseComments)
 	authRoute.POST("/api/expense/:id/comment", s.handler.createExpenseComment)
+	authRoute.DELETE("/api/expense/:id/comment/:comment_id", s.handler.deleteExpenseComment)
 
 	server := http.Server{
 		Addr:    httpSetting.Listen,

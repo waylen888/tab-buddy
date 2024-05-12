@@ -25,7 +25,8 @@ type Database interface {
 	GetCurrency(code string) (entity.Currency, error)
 	GetCurrencies() ([]entity.Currency, error)
 
-	CreateComment(arg entity.CreateCommentArguments) (entity.Comment, error)
+	CreateComment(args entity.CreateCommentArguments) (entity.Comment, error)
+	DeleteComment(args entity.DeleteCommentArguments) error
 	GetExpenseComments(expenseID string) ([]entity.Comment, error)
 	Close() error
 }
