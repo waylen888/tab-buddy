@@ -5,7 +5,7 @@ import { GroupExpense } from "../model";
 import LeaderboardIcon from '@mui/icons-material/Leaderboard';
 
 import { getCategory } from "../components/CategoryIcon";
-import { DefaultizedPieValueType, pieArcLabelClasses } from '@mui/x-charts';
+import { DefaultizedPieValueType, pieArcLabelClasses, legendClasses } from '@mui/x-charts';
 
 import AutoSizer from "react-virtualized-auto-sizer";
 
@@ -57,6 +57,10 @@ function SummaryChart({ open, onClose, expenses }: {
     const percent = params.value / summary.total;
     return `${(percent * 100).toFixed(0)}%`;
   };
+  const getLabel = (value: number) => {
+    const percent = value / summary.total;
+    return `${(percent * 100).toFixed(0)}%`;
+  };
 
   const theme = useTheme()
 
@@ -84,7 +88,10 @@ function SummaryChart({ open, onClose, expenses }: {
               <PieChart
                 series={[
                   {
-                    data: summary?.expenses,
+                    data: summary?.expenses?.map((expense) => ({
+                      ...expense,
+                      label: `${expense.label} ${getLabel(expense.value)}`
+                    })),
                     arcLabel: getArcLabel,
                     outerRadius: 150,
                     cx: width / 2,
@@ -94,9 +101,12 @@ function SummaryChart({ open, onClose, expenses }: {
                 height={height}
                 sx={{
                   [`& .${pieArcLabelClasses.root}`]: {
-                    fill: 'white',
+                    fill: "white",
                     fontSize: 14,
                   },
+                  [`& .${legendClasses.root}`]: {
+                    color: "white",
+                  }
 
                 }}
                 slotProps={{
@@ -106,6 +116,7 @@ function SummaryChart({ open, onClose, expenses }: {
                       vertical: "bottom",
                       horizontal: "middle",
                     },
+
 
                   }
                 }}
