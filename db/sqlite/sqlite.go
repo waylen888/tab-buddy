@@ -62,7 +62,10 @@ func (s *sqlite) Close() error {
 	return s.rwDB.Close()
 }
 
-func (s *sqlite) WithTx(ctx context.Context, fn func(tx *sql.Tx) error) error {
+func (s *sqlite) WithTx(ctx context.Context, fn func(ctx context.Context, tx *sql.Tx) error) error {
+	ctx, cancel := context.WithTimeout(ctx, s.timeout)
+	defer cancel()
+
 	tx, err := s.rwDB.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -73,7 +76,7 @@ func (s *sqlite) WithTx(ctx context.Context, fn func(tx *sql.Tx) error) error {
 			panic(v)
 		}
 	}()
-	if err := fn(tx); err != nil {
+	if err := fn(ctx, tx); err != nil {
 		if rerr := tx.Rollback(); rerr != nil {
 			err = fmt.Errorf("%w: rolling back transaction: %v", err, rerr)
 		}
@@ -180,5 +183,17 @@ CREATE TABLE IF NOT EXISTS "expense_comment" (
 	FOREIGN KEY("expense_id") REFERENCES "expense"("id") ON DELETE CASCADE,
 	PRIMARY KEY("id"),
 	FOREIGN KEY("create_by") REFERENCES "user"("id")
+);`),
+	lo.T2("expense_photo",
+		`
+CREATE TABLE IF NOT EXISTS "expense_photo" (
+	"id"	TEXT NOT NULL,
+	"filename"	TEXT NOT NULL,
+	"size"	INTEGER NOT NULL,
+	"mime"	TEXT NOT NULL,
+	"create_at"	DATETIME NOT NULL,
+	"update_at"	DATETIME NOT NULL,
+	"expense_id"	TEXT NOT NULL,
+	FOREIGN KEY("expense_id") REFERENCES "expense"("id") ON DELETE CASCADE
 );`),
 }

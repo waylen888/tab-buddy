@@ -20,7 +20,6 @@ import GroupSettingDialog from './routes/GroupSettingDialog';
 import SetToken from './routes/SetToken';
 import ExpenseEditDialog from './routes/ExpenseEditDialog';
 
-
 const router = createBrowserRouter([
   {
     path: "/login",

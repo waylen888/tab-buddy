@@ -20,17 +20,22 @@ var (
 func main() {
 	flag.Parse()
 
-	slog.Info(
-		"start tabbuddy",
-		"database-path", *databasePath,
-		"config-path", *cfgPath,
-	)
+	slog.Info("start tabbuddy")
+
+	slog.Info("load config", "path", *cfgPath)
 	cfg, err := config.New(*cfgPath)
 	if err != nil {
 		slog.Error("load config", "error", err)
 		os.Exit(1)
 	}
 
+	slog.Info("create photo store dir", "dir", cfg.PhotoStoreDir)
+	if err := os.MkdirAll(cfg.PhotoStoreDir, 0755); err != nil {
+		slog.Error("create photo store dir", "error", err)
+		os.Exit(1)
+	}
+
+	slog.Info("open sqlite", "path", *databasePath)
 	db, err := sqlite.New(context.TODO(), *databasePath)
 	if err != nil {
 		slog.Error("open sqlite", "error", err)
@@ -40,7 +45,7 @@ func main() {
 
 	g, ctx := errgroup.WithContext(context.Background())
 	g.Go(func() error {
-		server := server.New(db, cfg.GoogleOAuth)
+		server := server.New(db, cfg.GoogleOAuth, cfg.PhotoStoreDir)
 		return server.Run(ctx, cfg.HTTPSetting)
 	})
 	if err := g.Wait(); err != nil {

@@ -2,13 +2,15 @@ package config
 
 import (
 	"os"
+	"path/filepath"
 
 	"github.com/pelletier/go-toml/v2"
 )
 
 type Config struct {
-	GoogleOAuth GoogleOAuth `toml:"google_oauth"`
-	HTTPSetting HTTPSetting `toml:"http_setting"`
+	GoogleOAuth   GoogleOAuth `toml:"google_oauth"`
+	HTTPSetting   HTTPSetting `toml:"http_setting"`
+	PhotoStoreDir string      `toml:"photo_store_dir"`
 }
 
 type GoogleOAuth struct {
@@ -36,5 +38,13 @@ func New(cfgPath string) (Config, error) {
 	if cfg.HTTPSetting.Listen == "" {
 		cfg.HTTPSetting.Listen = ":8081"
 	}
+
+	if cfg.PhotoStoreDir == "" {
+		wd, _ := os.Getwd()
+		cfg.PhotoStoreDir = filepath.Join(wd, "./photos")
+	} else if !filepath.IsAbs(cfg.PhotoStoreDir) {
+		cfg.PhotoStoreDir, _ = filepath.Abs(cfg.PhotoStoreDir)
+	}
+
 	return cfg, nil
 }

@@ -17,6 +17,11 @@ export interface Expense {
   updateAt: string
   createdBy: User
 }
+
+export interface ExpensePhoto {
+  id: string
+}
+
 export interface ExpenseWithSplitUsers extends Expense {
   splitUsers: SplitUser[]
 }

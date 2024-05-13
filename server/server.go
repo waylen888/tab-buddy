@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"log/slog"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -15,9 +16,9 @@ type Server struct {
 	googleHandler *GoogleHandler
 }
 
-func New(db db.Database, oauthCfg config.GoogleOAuth) *Server {
+func New(db db.Database, oauthCfg config.GoogleOAuth, photoStoreDir string) *Server {
 	return &Server{
-		handler:       NewAPIHandler(db, finmind.NewClient()),
+		handler:       NewAPIHandler(db, finmind.NewClient(), photoStoreDir),
 		googleHandler: NewGoogleHandler(db, oauthCfg),
 	}
 }
@@ -29,6 +30,7 @@ func (s *Server) Run(ctx context.Context, httpSetting config.HTTPSetting) error 
 
 	engine.GET("/google/oauth/callback", s.googleHandler.Callback)
 	engine.GET("/google/oauth/login", s.googleHandler.Login)
+
 	engine.GET("/api/google/oauth/login", s.googleHandler.Login)
 
 	engine.NoRoute(s.handler.noRoute)
@@ -54,7 +56,12 @@ func (s *Server) Run(ctx context.Context, httpSetting config.HTTPSetting) error 
 	authRoute.GET("/api/expense/:id/comments", s.handler.getExpenseComments)
 	authRoute.POST("/api/expense/:id/comment", s.handler.createExpenseComment)
 	authRoute.DELETE("/api/expense/:id/comment/:comment_id", s.handler.deleteExpenseComment)
+	authRoute.POST("/api/expense/:id/photos", s.handler.uploadExpensePhotos)
+	authRoute.GET("/api/expense/:id/photos", s.handler.getExpensePhotos)
+	// authRoute.GET("/static/photo/:id", s.handler.staticPhoto)
+	engine.GET("/static/photo/:id", s.handler.staticPhoto)
 
+	slog.Info("server start", "listen", httpSetting.Listen)
 	server := http.Server{
 		Addr:    httpSetting.Listen,
 		Handler: engine,

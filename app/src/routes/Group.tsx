@@ -3,11 +3,10 @@ import { Group, GroupExpense, User } from "../model"
 import { Link, Outlet, useNavigate, useParams } from "react-router-dom"
 import { useQuery } from "@tanstack/react-query"
 import { authFetch } from "../hooks/api"
-import { Box, IconButton, Stack, Typography } from "@mui/material";
+import { Box, Button, IconButton, Stack, Typography } from "@mui/material";
 import GroupExpenses from "./GroupExpenses";
 import GroupDebt from "./GroupDebt";
 import SettingsIcon from '@mui/icons-material/Settings';
-
 
 export default function GroupRoute() {
   const { groupId } = useParams<{ groupId: string }>();
@@ -31,6 +30,7 @@ export default function GroupRoute() {
             <SettingsIcon />
           </IconButton>
         </Stack>
+
         <GroupDebt expenses={groupExpenses} />
       </Box>
       <GroupExpenses
@@ -41,5 +41,4 @@ export default function GroupRoute() {
     </div>
   )
 }
-
 

@@ -12,7 +12,7 @@ export default defineConfig({
         name: "TAB BUDDY",
         short_name: "TABBUD",
         description: "A simple expense tracker",
-        theme_color: "#2196f3",
+        theme_color: "#1976D2",
         icons: [
           {
             src: "./public/android-chrome-192x192.png",
@@ -51,6 +51,10 @@ export default defineConfig({
         changeOrigin: true,
       },
       '/google': {
+        target: 'http://localhost:8081',
+        changeOrigin: true,
+      },
+      '/static/photo': {
         target: 'http://localhost:8081',
         changeOrigin: true,
       },

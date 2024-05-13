@@ -5,14 +5,21 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"image"
+	"image/color"
 	"mime"
 	"net/http"
+	"os"
 	"path"
+	"path/filepath"
 	"strings"
 	"time"
 
+	"github.com/disintegration/imaging"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/h2non/filetype"
+	"github.com/rs/xid"
 	"github.com/samber/lo"
 	"github.com/shopspring/decimal"
 	"github.com/waylen888/tab-buddy/app"
@@ -24,12 +31,17 @@ import (
 )
 
 type APIHandler struct {
-	db         db.Database
-	rateGetter finmind.TaiwanExchangeRateGetter
+	db            db.Database
+	rateGetter    finmind.TaiwanExchangeRateGetter
+	photoStoreDir string
 }
 
-func NewAPIHandler(db db.Database, rateGetter finmind.TaiwanExchangeRateGetter) *APIHandler {
-	return &APIHandler{db: db, rateGetter: rateGetter}
+func NewAPIHandler(
+	db db.Database,
+	rateGetter finmind.TaiwanExchangeRateGetter,
+	photoStoreDir string,
+) *APIHandler {
+	return &APIHandler{db: db, rateGetter: rateGetter, photoStoreDir: photoStoreDir}
 }
 
 const TOKEN_SECRET = "Kia9012)f^#$$"
@@ -673,4 +685,119 @@ func (h *APIHandler) deleteExpenseComment(ctx *gin.Context) {
 		return
 	}
 	ctx.Status(http.StatusOK)
+}
+
+func (h *APIHandler) uploadExpensePhotos(ctx *gin.Context) {
+
+	form, err := ctx.MultipartForm()
+	if err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	for key, formValue := range form.File {
+		if key != "photo" {
+			ctx.AbortWithError(http.StatusBadRequest, errors.New("invalid form"))
+			return
+		}
+		var eps []entity.ExpensePhoto
+		for _, fileHeader := range formValue {
+			ep, err := func() (entity.ExpensePhoto, error) {
+				now := time.Now()
+				photoID := xid.NewWithTime(now).String()
+				storePath := filepath.Join(h.photoStoreDir, photoID)
+				if err := ctx.SaveUploadedFile(fileHeader, storePath); err != nil {
+					return entity.ExpensePhoto{}, err
+				}
+
+				if err := createThumbnail(storePath); err != nil {
+					return entity.ExpensePhoto{}, err
+				}
+
+				ftype, _ := filetype.MatchFile(storePath)
+				return entity.ExpensePhoto{
+					ID:       photoID,
+					Filename: fileHeader.Filename,
+					Size:     fileHeader.Size,
+					MIME:     ftype.MIME.Value,
+					CreateAt: now,
+				}, err
+			}()
+			if err != nil {
+				// upload failed, cleanup file
+				lo.ForEach(eps, func(ep entity.ExpensePhoto, _ int) {
+					os.Remove(filepath.Join(h.photoStoreDir, ep.ID))
+				})
+				ctx.AbortWithError(http.StatusInternalServerError, err)
+				return
+			}
+			eps = append(eps, ep)
+		}
+
+		err := h.db.CreateExpensePhotos(entity.CreateExpensePhotosArguments{
+			ExpenseID: ctx.Param("id"),
+			Photos:    eps,
+		})
+		if err != nil {
+			// write database failed, cleanup file
+			lo.ForEach(eps, func(ep entity.ExpensePhoto, _ int) {
+				os.Remove(filepath.Join(h.photoStoreDir, ep.ID))
+			})
+			ctx.AbortWithError(http.StatusInternalServerError, err)
+			return
+		}
+	}
+	ctx.Status(http.StatusOK)
+}
+
+func (h *APIHandler) getExpensePhotos(ctx *gin.Context) {
+
+	photos, err := h.db.GetExpensePhotos(ctx.Param("id"))
+	if err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+	ctx.JSON(http.StatusOK, lo.Map(photos, func(photo entity.ExpensePhoto, _ int) model.ExpensePhoto {
+		return model.ExpensePhoto{
+			ID: photo.ID,
+		}
+	}))
+}
+
+func (h *APIHandler) staticPhoto(ctx *gin.Context) {
+	photo, err := h.db.GetExpensePhoto(ctx.Param("id"))
+	if err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	filepath := filepath.Join(h.photoStoreDir, photo.ID)
+	if ctx.Query("thumbnail") != "" {
+		filepath = filepath + "-thumbnail"
+	}
+
+	file, err := os.Open(filepath)
+	if err != nil {
+		ctx.AbortWithError(http.StatusNotFound, err)
+		return
+	}
+	defer file.Close()
+
+	ctx.DataFromReader(http.StatusOK, photo.Size, photo.MIME, file, nil)
+}
+
+func createThumbnail(storePath string) error {
+
+	return nil
+
+	img, err := imaging.Open(storePath)
+	if err != nil {
+		return err
+	}
+	thumbnail := imaging.Thumbnail(img, 100, 100, imaging.CatmullRom)
+	// create a new blank image
+	dst := imaging.New(100, 100, color.NRGBA{0, 0, 0, 0})
+	// paste thumbnails into the new image side by side
+	dst = imaging.Paste(dst, thumbnail, image.Pt(0, 0))
+	return imaging.Save(dst, storePath+"-thumbnail")
 }

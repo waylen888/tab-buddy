@@ -56,15 +56,12 @@ func (s *sqlite) CreateGroup(name string, ownerID string) (entity.Group, error) 
 		return entity.Group{}, fmt.Errorf("ownerID is empty")
 	}
 
-	ctx, cancel := context.WithTimeout(context.TODO(), s.timeout)
-	defer cancel()
-
 	group := entity.Group{
 		ID:       xid.New().String(),
 		Name:     name,
 		CreateAt: time.Now(),
 	}
-	return group, s.WithTx(ctx, func(tx *sql.Tx) error {
+	return group, s.WithTx(context.Background(), func(ctx context.Context, tx *sql.Tx) error {
 		_, err := tx.ExecContext(
 			ctx,
 			`INSERT INTO "group" (id, name, create_at, update_at) VALUES (@id, @name, @create_at, @update_at)`,

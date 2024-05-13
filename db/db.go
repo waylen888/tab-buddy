@@ -28,5 +28,10 @@ type Database interface {
 	CreateComment(args entity.CreateCommentArguments) (entity.Comment, error)
 	DeleteComment(args entity.DeleteCommentArguments) error
 	GetExpenseComments(expenseID string) ([]entity.Comment, error)
+
+	CreateExpensePhotos(args entity.CreateExpensePhotosArguments) error
+	GetExpensePhotos(expenseID string) ([]entity.ExpensePhoto, error)
+	GetExpensePhoto(ID string) (entity.ExpensePhoto, error)
+
 	Close() error
 }
