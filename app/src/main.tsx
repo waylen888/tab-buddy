@@ -66,6 +66,7 @@ const router = createBrowserRouter([
                   },
                 ],
               },
+
             ],
           },
           {
@@ -76,6 +77,7 @@ const router = createBrowserRouter([
                 path: "edit",
                 element: <ExpenseEditDialog />
               },
+
             ],
           },
         ],

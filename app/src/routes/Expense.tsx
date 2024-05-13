@@ -15,6 +15,7 @@ import 'react-photo-view/dist/react-photo-view.css';
 import { PhotoRenderParams } from "react-photo-view/dist/types";
 import { useSnackbar } from "notistack";
 
+
 export default function Expense() {
   const { expenseId } = useParams<{ expenseId: string }>()
   const { data, isLoading } = useQuery({
@@ -39,6 +40,7 @@ export default function Expense() {
             <ModeEditIcon />
           </IconButton>
           <ImageUploadButton />
+
         </Stack>
 
         <Typography>

@@ -7,6 +7,7 @@ import { Box, Button, IconButton, Stack, Typography } from "@mui/material";
 import GroupExpenses from "./GroupExpenses";
 import GroupDebt from "./GroupDebt";
 import SettingsIcon from '@mui/icons-material/Settings';
+import { SummaryButton } from "./SummaryChart";
 
 export default function GroupRoute() {
   const { groupId } = useParams<{ groupId: string }>();
@@ -26,9 +27,12 @@ export default function GroupRoute() {
       <Box sx={{ p: 2 }}>
         <Stack direction="row" alignItems="baseline" gap={1} display="flex" justifyContent="space-between">
           <Typography variant="h4">{data?.name}</Typography>
-          <IconButton onClick={() => navigate("setting")}>
-            <SettingsIcon />
-          </IconButton>
+          <Stack direction="row" alignItems="center" gap={1}>
+            <SummaryButton expenses={groupExpenses} />
+            <IconButton onClick={() => navigate("setting")}>
+              <SettingsIcon />
+            </IconButton>
+          </Stack>
         </Stack>
 
         <GroupDebt expenses={groupExpenses} />
