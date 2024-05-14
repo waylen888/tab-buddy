@@ -12,4 +12,9 @@ const FormattedAmount: React.FC<{
   )
 }
 
+export const format = (value: string | number, currency: string) => {
+  const nf = Intl.NumberFormat(undefined, { style: "currency", currency })
+  return nf.format(+value)
+}
+
 export default FormattedAmount;

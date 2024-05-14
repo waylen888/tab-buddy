@@ -28,7 +28,7 @@ export default function GroupRoute() {
         <Stack direction="row" alignItems="baseline" gap={1} display="flex" justifyContent="space-between">
           <Typography variant="h4">{data?.name}</Typography>
           <Stack direction="row" alignItems="center" gap={1}>
-            <SummaryButton expenses={groupExpenses} />
+            <SummaryButton groupId={groupId} />
             <IconButton onClick={() => navigate("setting")}>
               <SettingsIcon />
             </IconButton>

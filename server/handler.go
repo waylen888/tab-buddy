@@ -245,11 +245,18 @@ func (h *APIHandler) deleteGroup(ctx *gin.Context) {
 }
 
 func (h *APIHandler) getGroupExpenses(ctx *gin.Context) {
-	group, err := h.db.GetGroup(ctx.Param("id"), GetUser(ctx).ID)
-	if err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
-		return
+	var toTWD calc.TWDBool
+	if ctx.Query("to_twd") != "" {
+		toTWD = calc.TWDBool(true)
+	} else {
+		group, err := h.db.GetGroup(ctx.Param("id"), GetUser(ctx).ID)
+		if err != nil {
+			ctx.AbortWithError(http.StatusInternalServerError, err)
+			return
+		}
+		toTWD = group.ConvertToTwd
 	}
+
 	expenses, err := h.db.GetGroupExpenses(ctx.Param("id"))
 	if err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
@@ -258,7 +265,7 @@ func (h *APIHandler) getGroupExpenses(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, lo.Map(expenses, func(expense entity.ExpenseWithSplitUser, _ int) model.GroupExpense {
 		var currency entity.Currency
-		if group.ConvertToTwd {
+		if toTWD {
 			currency, _ = h.db.GetCurrency("TWD")
 		} else {
 			currency, _ = h.db.GetCurrency(expense.CurrencyCode)
@@ -266,7 +273,7 @@ func (h *APIHandler) getGroupExpenses(ctx *gin.Context) {
 		return model.GroupExpense{
 			Expense: model.Expense{
 				ID:          expense.ID,
-				Amount:      group.ConvertToTwd.ToTWD(expense.Amount, expense.TWDRate, currency.DecimalDigits),
+				Amount:      toTWD.ToTWD(expense.Amount, expense.TWDRate, currency.DecimalDigits),
 				Description: expense.Description,
 				Date:        expense.Date,
 				Category:    expense.Category,
@@ -287,7 +294,7 @@ func (h *APIHandler) getGroupExpenses(ctx *gin.Context) {
 					},
 					Paid:   user.Paid,
 					Owed:   user.Owed,
-					Amount: group.ConvertToTwd.ToTWD(user.Amount, expense.TWDRate, currency.DecimalDigits),
+					Amount: toTWD.ToTWD(user.Amount, expense.TWDRate, currency.DecimalDigits),
 				}
 			}),
 		}
