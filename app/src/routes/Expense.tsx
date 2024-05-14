@@ -1,9 +1,9 @@
-import { HTMLAttributes, useState } from "react";
+import { HTMLAttributes } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { Link, Outlet, useNavigate, useParams } from "react-router-dom"
+import { Outlet, useNavigate, useParams } from "react-router-dom"
 import { authFetch } from "../hooks/api"
 import { ExpensePhoto, ExpenseWithSplitUsers } from "../model"
-import { CircularProgress, Divider, IconButton, Stack, Typography } from "@mui/material"
+import { Button, CircularProgress, Divider, IconButton, Stack, Typography } from "@mui/material"
 import dayjs from "dayjs"
 import Comments from "./Comments"
 import ModeEditIcon from '@mui/icons-material/ModeEdit';
@@ -68,7 +68,11 @@ const Photos: React.FC<{}> = () => {
     }
   })
   return (
-    <PhotoProvider>
+    <PhotoProvider toolbarRender={() => {
+      return (
+        <AddPhotoAlternateIcon onClick={() => { alert("delete?") }} />
+      )
+    }}>
       <Stack direction="row" gap={2} sx={{
         overflowY: "auto",
       }}>
@@ -91,10 +95,20 @@ const Photo: React.FC<{
       })
     }
   })
+
   return (
     <PhotoView src={data}>
-      <img src={data} width={100} height={100} />
-    </PhotoView>
+      <img
+        src={data}
+        width={100}
+        height={100}
+        style={{
+          objectFit: "cover",
+          border: "1px solid #000",
+        }}
+        alt=""
+      />
+    </PhotoView >
   )
 }
 

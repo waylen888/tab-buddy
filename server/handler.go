@@ -811,6 +811,7 @@ func (h *APIHandler) staticPhoto(ctx *gin.Context) {
 	}
 	defer file.Close()
 
+	ctx.Header("Cache-Control", "max-age=31536000")
 	ctx.DataFromReader(http.StatusOK, photo.Size, photo.MIME, file, nil)
 }
 
