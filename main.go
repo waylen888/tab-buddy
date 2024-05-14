@@ -45,8 +45,7 @@ func main() {
 
 	g, ctx := errgroup.WithContext(context.Background())
 	g.Go(func() error {
-		server := server.New(db, cfg.GoogleOAuth, cfg.PhotoStoreDir)
-		return server.Run(ctx, cfg.HTTPSetting)
+		return server.New(db, cfg).Run(ctx, cfg.HTTPSetting)
 	})
 	if err := g.Wait(); err != nil {
 		slog.Error("run server", "error", err)

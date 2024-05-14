@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"image"
 	"image/color"
+	"log/slog"
 	"mime"
 	"net/http"
 	"os"
@@ -27,6 +28,7 @@ import (
 	"github.com/waylen888/tab-buddy/db"
 	"github.com/waylen888/tab-buddy/db/entity"
 	"github.com/waylen888/tab-buddy/finmind"
+	"github.com/waylen888/tab-buddy/mail"
 	"github.com/waylen888/tab-buddy/server/model"
 )
 
@@ -34,14 +36,21 @@ type APIHandler struct {
 	db            db.Database
 	rateGetter    finmind.TaiwanExchangeRateGetter
 	photoStoreDir string
+	mailSender    *mail.Sender
 }
 
 func NewAPIHandler(
 	db db.Database,
 	rateGetter finmind.TaiwanExchangeRateGetter,
 	photoStoreDir string,
+	mailSender *mail.Sender,
 ) *APIHandler {
-	return &APIHandler{db: db, rateGetter: rateGetter, photoStoreDir: photoStoreDir}
+	return &APIHandler{
+		db:            db,
+		rateGetter:    rateGetter,
+		photoStoreDir: photoStoreDir,
+		mailSender:    mailSender,
+	}
 }
 
 const TOKEN_SECRET = "Kia9012)f^#$$"
@@ -65,6 +74,17 @@ func (h *APIHandler) login(ctx *gin.Context) {
 		ctx.AbortWithStatus(http.StatusUnauthorized)
 		return
 	}
+
+	go func() {
+		err := h.mailSender.SendMail(
+			[]string{user.Email},
+			"用戶登入通知",
+			fmt.Sprintf("您的帳號%s被登入，IP: %s", user.Username, ctx.ClientIP()),
+		)
+		if err != nil {
+			slog.Error("send login notify", "error", err)
+		}
+	}()
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"id":       user.ID,
@@ -499,6 +519,7 @@ func (h *APIHandler) inviteUserToGroup(ctx *gin.Context) {
 		Username *string `json:"username"`
 		Email    *string `json:"email"`
 	}
+
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return

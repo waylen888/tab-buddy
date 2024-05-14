@@ -9,6 +9,7 @@ import (
 	"github.com/waylen888/tab-buddy/config"
 	"github.com/waylen888/tab-buddy/db"
 	"github.com/waylen888/tab-buddy/finmind"
+	"github.com/waylen888/tab-buddy/mail"
 )
 
 type Server struct {
@@ -16,10 +17,10 @@ type Server struct {
 	googleHandler *GoogleHandler
 }
 
-func New(db db.Database, oauthCfg config.GoogleOAuth, photoStoreDir string) *Server {
+func New(db db.Database, cfg config.Config) *Server {
 	return &Server{
-		handler:       NewAPIHandler(db, finmind.NewClient(), photoStoreDir),
-		googleHandler: NewGoogleHandler(db, oauthCfg),
+		handler:       NewAPIHandler(db, finmind.NewClient(), cfg.PhotoStoreDir, mail.NewSender(cfg.SMTP)),
+		googleHandler: NewGoogleHandler(db, cfg.GoogleOAuth),
 	}
 }
 

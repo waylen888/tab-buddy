@@ -11,6 +11,7 @@ type Config struct {
 	GoogleOAuth   GoogleOAuth `toml:"google_oauth"`
 	HTTPSetting   HTTPSetting `toml:"http_setting"`
 	PhotoStoreDir string      `toml:"photo_store_dir"`
+	SMTP          SMTPSetting `toml:"smtp"`
 }
 
 type GoogleOAuth struct {
@@ -23,6 +24,12 @@ type HTTPSetting struct {
 	Listen       string `toml:"listen"`
 	CertFilePath string `toml:"cert_filepath"`
 	KeyFilePath  string `toml:"key_filepath"`
+}
+
+type SMTPSetting struct {
+	Host     string `toml:"host"`
+	Username string `toml:"username"`
+	Password string `toml:"password"`
 }
 
 func New(cfgPath string) (Config, error) {
