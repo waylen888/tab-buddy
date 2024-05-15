@@ -10,3 +10,8 @@ type User struct {
 	CreateAt    time.Time `json:"createAt"`
 	UpdateAt    time.Time `json:"updateAt"`
 }
+
+type UserSetting struct {
+	ThemeMode        string `json:"themeMode"`
+	PushNotification bool   `json:"pushNotification"`
+}

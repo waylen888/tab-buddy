@@ -2,11 +2,13 @@ import { Stack, Typography } from "@mui/material"
 import { useAuth } from "../components/AuthProvider"
 import { Currency, GroupExpense, User } from "../model"
 import FormattedAmount from "../components/FormattedAmount"
+import { useTranslation } from "react-i18next"
 
 const GroupDebt: React.FC<{
   expenses: GroupExpense[] | undefined
 }> = ({ expenses }) => {
   const { user: me } = useAuth()
+  const { t } = useTranslation()
   const debts = expenses?.reduce((pv, expense) => {
     if (!pv[expense.currency.code]) {
       pv[expense.currency.code] = {
@@ -78,12 +80,12 @@ const GroupDebt: React.FC<{
               {
                 debt.amount.startsWith("-")
                   ? (
-                    <Typography sx={{ color: "orange" }}>You owes {debt.name}
+                    <Typography sx={{ color: "orange" }}>{t("group.you_owes")} {debt.name}
                       <FormattedAmount currency={debt.currency} value={debt.amount} />
                     </Typography>
                   )
                   : (
-                    <Typography sx={{ color: "green" }}>{debt.name} owes You
+                    <Typography sx={{ color: "green" }}>{debt.name} {t("group.owes_you")}
                       <FormattedAmount currency={debt.currency} value={debt.amount} />
                     </Typography>
                   )

@@ -2,6 +2,8 @@ import { AppBar, Box, Button, Drawer, IconButton, List, ListItem, ListItemButton
 import MenuIcon from '@mui/icons-material/Menu';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import ThemeSwitch from './ThemeSwitch';
 
 export const DRAWER_WIDTH = "200px"
 
@@ -12,26 +14,40 @@ export default function NavBar() {
   };
   const navigate = useNavigate();
 
+  const theme = useTheme();
+  const fullScreen = useMediaQuery(theme.breakpoints.up('md'));
+  const { t } = useTranslation()
+
   const DrawerList = (
     <Box sx={{ width: DRAWER_WIDTH }} role="presentation" onClick={toggleDrawer(false)}>
       <List>
-        {['Groups'].map((text) => (
-          <ListItem key={text} disablePadding>
+        {[
+          { path: "groups", label: t('menus.groups') },
+        ].map((menu) => (
+          <ListItem key={menu.path} disablePadding>
             <ListItemButton onClick={() => {
-              navigate(text.toLowerCase())
+              navigate(menu.path)
             }}>
-              <ListItemText primary={text} />
+              <ListItemText primary={menu.label} />
             </ListItemButton>
           </ListItem>
         ))}
-      </List>
 
+        <ListItem key="theme_switch" disablePadding>
+          <ThemeSwitch />
+        </ListItem>
+
+        <ListItem key="logout" disablePadding>
+          <ListItemButton onClick={() => {
+            localStorage.removeItem("access_token")
+            navigate("/login")
+          }}>
+            <ListItemText primary={t("logout")} />
+          </ListItemButton>
+        </ListItem>
+      </List>
     </Box>
   );
-
-  const theme = useTheme();
-  const fullScreen = useMediaQuery(theme.breakpoints.up('md'));
-
 
   return (
     <>
@@ -74,17 +90,12 @@ export default function NavBar() {
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
             TAB BUDDY
           </Typography>
-          <Button color="inherit"
-            onClick={() => {
-              localStorage.removeItem('access_token')
-              navigate('/login')
-            }}
-          >
-            Logout
-          </Button>
+
         </Toolbar>
       </AppBar>
     </>
   );
 }
+
+
 

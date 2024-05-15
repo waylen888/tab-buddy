@@ -7,7 +7,7 @@ import { Box, Button, IconButton, Stack, Typography } from "@mui/material";
 import GroupExpenses from "./GroupExpenses";
 import GroupDebt from "./GroupDebt";
 import SettingsIcon from '@mui/icons-material/Settings';
-import { SummaryButton } from "./SummaryChart";
+import { SummaryButton } from "./GroupSummaryChart";
 
 export default function GroupRoute() {
   const { groupId } = useParams<{ groupId: string }>();

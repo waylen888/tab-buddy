@@ -1,0 +1,31 @@
+{
+  "logout": "Logout",
+  "menus": {
+    "groups": "Groups"
+  },
+  "groups": {
+    "createGroup": "Create Group"
+  },
+  "group": {
+    "you_owes": "You owes",
+    "owes_you": "owes You",
+    "expenses": {
+      "paid": "paid",
+      "not_involved": "not involved",
+      "you_borrowd": "you borrowd",
+      "you_lent": "you lent",
+      "you": "YOU"
+    }
+  },
+  "expense": {
+    "added_by_on": "Added by {{name}} on {{date}}",
+    "create_dialog": {
+      "title": "Expense",
+      "submit_button": "Create"
+    }
+  },
+  "comments": {
+    "title": "Comments",
+    "createAt": "Create At"
+  }
+}

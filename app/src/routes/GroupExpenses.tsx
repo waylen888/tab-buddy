@@ -7,12 +7,13 @@ import AddIcon from '@mui/icons-material/Add';
 import { useAuth } from "../components/AuthProvider"
 import FormattedAmount from "../components/FormattedAmount"
 import CategoryIcon from "../components/CategoryIcon"
+import { useTranslation } from "react-i18next"
 
 const GroupExpenses: React.FC<{
   data: GroupExpense[] | undefined;
   onRefetchRequest?: () => void
 }> = ({ data, onRefetchRequest = () => { } }) => {
-
+  const { t } = useTranslation()
   const { user: me } = useAuth()
   const navigate = useNavigate();
   const catdata = data?.reduce((pv, expense, index, data) => {
@@ -82,7 +83,7 @@ const GroupExpenses: React.FC<{
                           </Typography>
                           <Typography variant="caption">
                             <YouOrDisplayName user={expense.splitUsers.find(user => user.paid)} />
-                            <span> paid </span>
+                            <span> {t("group.expenses.paid")} </span>
                             <FormattedAmount currency={expense.currency} value={expense.amount} />
                           </Typography>
                         </Stack>
@@ -132,10 +133,11 @@ const YouOrDisplayName: React.FC<{
   user: User | undefined
 }> = ({ user }) => {
   const { user: me } = useAuth()
+  const { t } = useTranslation()
   return (
     <span>
       {
-        user?.id === me.id ? "YOU" : user?.displayName
+        user?.id === me.id ? t("group.expenses.you") : user?.displayName
       }
     </span>
   )
@@ -145,12 +147,12 @@ const Amount: React.FC<{
   currency: Currency;
   value: string | null;
 }> = ({ currency, value }) => {
-
+  const { t } = useTranslation()
   if (!value) {
     return (
       <Stack sx={{}}>
         <Typography variant="caption" sx={{ textAlign: 'right' }}>
-          not involved
+          {t("group.expenses.not_involved")}
         </Typography>
       </Stack>
     )
@@ -160,7 +162,7 @@ const Amount: React.FC<{
   return (
     <Stack sx={{ color: borrowed ? "orange" : "green" }}>
       <Typography variant="caption" sx={{ textAlign: 'right' }}>
-        {borrowed ? "you borrowd" : "you lent"}
+        {borrowed ? t("group.expenses.you_borrowd") : t("group.expenses.you_lent")}
       </Typography>
       <Typography variant="caption" sx={{ textAlign: 'right' }} fontWeight="bold">
         <FormattedAmount currency={currency} value={value} />

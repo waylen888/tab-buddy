@@ -2,12 +2,14 @@ import { Group } from "../model"
 import { Link, Outlet } from "react-router-dom"
 import { authFetch } from "../hooks/api"
 import { useQuery } from "@tanstack/react-query"
+import { useTranslation } from "react-i18next"
 export default function Groups() {
   // const data = useLoaderData<typeof loader>()
-  const {data} = useQuery({
+  const { data } = useQuery({
     queryKey: ["groups"],
     queryFn: () => authFetch<Group[]>("/api/groups"),
   })
+  const { t } = useTranslation()
   return (
     <div>
 
@@ -21,7 +23,9 @@ export default function Groups() {
           </li>
         ))}
       </ul>
-      <Link to="/groups/create">Create Group</Link>
+      <Link to="/groups/create">
+        {t("groups.createGroup")}
+      </Link>
       <Outlet />
     </div>
   )

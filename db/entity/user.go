@@ -27,3 +27,8 @@ type User struct {
 func (u User) CheckPassword(plainPassword string) error {
 	return bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(plainPassword))
 }
+
+type UserSetting struct {
+	ThemeMode        string
+	PushNotification bool
+}

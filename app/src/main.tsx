@@ -13,12 +13,15 @@ import QueryClientProvider from './components/QueryClientProvider';
 
 import { SnackbarProvider } from 'notistack';
 import GroupDialog from './routes/GroupDialog';
-import { CssBaseline, GlobalStyles, ThemeProvider, createTheme } from '@mui/material';
+import { CssBaseline, GlobalStyles, createTheme } from '@mui/material';
 import InviteDialog from './routes/InviteDialog';
 import Expense from './routes/Expense';
 import GroupSettingDialog from './routes/GroupSettingDialog';
 import SetToken from './routes/SetToken';
 import ExpenseEditDialog from './routes/ExpenseEditDialog';
+
+import "./i18n";
+import { DefaultThemeProvider, ThemeProvider } from './components/ThemeProvider';
 
 const router = createBrowserRouter([
   {
@@ -41,7 +44,6 @@ const router = createBrowserRouter([
           {
             path: "create",
             element: <GroupDialog />,
-            errorElement: <div>Error</div>
           },
         ],
       },
@@ -86,29 +88,10 @@ const router = createBrowserRouter([
   },
 ])
 
-const theme = createTheme({
-  components: {
-    MuiTextField: {
-      defaultProps: {
-        size: "small",
-      }
-    },
-    MuiSelect: {
-      defaultProps: {
-        size: "small",
-      }
-    },
-    MuiDialog: {
-      defaultProps: {
-        fullWidth: true,
-      }
-    },
-  }
-})
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <ThemeProvider theme={theme}>
+    <DefaultThemeProvider>
       <CssBaseline />
       {/* <GlobalStyles
         styles={{
@@ -122,6 +105,6 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           <RouterProvider router={router} fallbackElement={null} />
         </SnackbarProvider>
       </QueryClientProvider>
-    </ThemeProvider>
+    </DefaultThemeProvider>
   </React.StrictMode>,
 )

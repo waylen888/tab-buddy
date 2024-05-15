@@ -85,3 +85,37 @@ func (s *sqlite) CreateUser(username, displayName, email, password string, creat
 	)
 	return user, err
 }
+
+func (s *sqlite) GetUserSetting(ID string) (entity.UserSetting, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), s.timeout)
+	defer cancel()
+	var userSetting entity.UserSetting
+	err := sqlscan.Get(
+		ctx,
+		s.rwDB,
+		&userSetting,
+		`SELECT theme_mode, push_notification FROM "user_setting" WHERE user_id = @id`,
+		sql.Named("id", ID),
+	)
+	return userSetting, err
+}
+
+func (s *sqlite) UpdateUserSetting(userID string, themeMode *string, pushNotification *bool) (entity.UserSetting, error) {
+	var setting entity.UserSetting
+	err := s.WithTx(context.Background(), func(ctx context.Context, tx *sql.Tx) error {
+		_, err := tx.ExecContext(
+			ctx,
+			`INSERT OR REPLACE INTO "user_setting" (user_id, theme_mode, push_notification)
+			VALUES (
+				@user_id,
+				COALESCE(@theme_mode, (SELECT theme_mode FROM user_setting WHERE user_id = @user_id), ""),
+				COALESCE(@push_notification, (SELECT push_notification FROM user_setting WHERE user_id = @user_id), 0)
+			)`,
+			sql.Named("user_id", userID),
+			sql.Named("theme_mode", themeMode),
+			sql.Named("push_notification", pushNotification),
+		)
+		return err
+	})
+	return setting, err
+}

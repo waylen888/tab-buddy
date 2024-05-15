@@ -9,6 +9,9 @@ type Database interface {
 	GetUserByUsername(username string) (entity.User, error)
 	CreateUser(username, displayName, email, password string, createType entity.UserCreateType) (entity.User, error)
 
+	GetUserSetting(ID string) (entity.UserSetting, error)
+	UpdateUserSetting(userID string, themeMode *string, pushNotification *bool) (entity.UserSetting, error)
+
 	GetGroups(userID string) ([]entity.Group, error)
 	GetGroup(ID string, userID string) (entity.Group, error)
 	CreateGroup(name string, ownerID string) (entity.Group, error)
@@ -16,7 +19,6 @@ type Database interface {
 	DeleteGroup(ID string) error
 	GetGroupMembers(ID string) ([]entity.User, error)
 	AddUserToGroupByUsername(groupID string, username *string, email *string) error
-
 	GetGroupExpenses(groupID string) ([]entity.ExpenseWithSplitUser, error)
 	GetExpense(ID string) (entity.ExpenseWithSplitUser, error)
 	CreateExpense(arg entity.CreateExpenseArguments) (entity.Expense, error)

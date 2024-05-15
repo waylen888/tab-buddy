@@ -39,6 +39,7 @@ func (s *Server) Run(ctx context.Context, httpSetting config.HTTPSetting) error 
 	engine.POST("/api/auth/login", s.handler.login)
 	engine.GET("/api/auth/refresh_token", jwtTokenCheck(s.handler.db), s.handler.refreshToken)
 
+	engine.GET("/static/photo/:id", s.handler.staticPhoto)
 	engine.POST("/api/user", s.handler.createUser)
 
 	authRoute := engine.Group("", jwtTokenCheck(s.handler.db))
@@ -59,8 +60,8 @@ func (s *Server) Run(ctx context.Context, httpSetting config.HTTPSetting) error 
 	authRoute.DELETE("/api/expense/:id/comment/:comment_id", s.handler.deleteExpenseComment)
 	authRoute.POST("/api/expense/:id/photos", s.handler.uploadExpensePhotos)
 	authRoute.GET("/api/expense/:id/photos", s.handler.getExpensePhotos)
-	// authRoute.GET("/static/photo/:id", s.handler.staticPhoto)
-	engine.GET("/static/photo/:id", s.handler.staticPhoto)
+	authRoute.GET("/api/me/setting", s.handler.getMeSetting)
+	authRoute.PATCH("/api/me/setting", s.handler.patchMeSetting)
 
 	slog.Info("server start", "listen", httpSetting.Listen)
 	server := http.Server{

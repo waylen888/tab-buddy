@@ -3,6 +3,8 @@ import { Box, CssBaseline, Toolbar, useMediaQuery, useTheme } from '@mui/materia
 import NavBar, { DRAWER_WIDTH } from '../components/NavBar'
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
 import AuthProvider from '../components/AuthProvider'
+import { ThemeProvider } from '../components/ThemeProvider'
+import { UserSettingProvider } from '../components/UserSettingProvider'
 
 function Layout() {
   const theme = useTheme()
@@ -13,12 +15,16 @@ function Layout() {
   }
   return (
     <AuthProvider>
-      <CssBaseline />
-      <NavBar />
-      <Box component="main" sx={{ flexGrow: 1, paddingLeft: fullScreen ? DRAWER_WIDTH : 0 }}>
-        <Toolbar />{/* for padding */}
-        <Outlet />
-      </Box>
+      <UserSettingProvider>
+        <ThemeProvider>
+          <CssBaseline />
+          <NavBar />
+          <Box component="main" sx={{ flexGrow: 1, paddingLeft: fullScreen ? DRAWER_WIDTH : 0 }}>
+            <Toolbar />{/* for padding */}
+            <Outlet />
+          </Box>
+        </ThemeProvider>
+      </UserSettingProvider>
     </AuthProvider>
   )
 }

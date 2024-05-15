@@ -47,6 +47,11 @@ export interface User {
   updateAt: string
 }
 
+export interface UserSetting {
+  themeMode: string;
+  pushNotification: boolean;
+}
+
 export interface Currency {
   code: string
   name: string

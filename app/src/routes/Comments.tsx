@@ -11,7 +11,8 @@ import { DRAWER_WIDTH } from "../components/NavBar";
 import Linkify from "linkify-react";
 import { useAuth } from "../components/AuthProvider";
 import DeleteIcon from '@mui/icons-material/Delete';
-
+import { useTranslation } from "react-i18next";
+import ArrowCircleUpIcon from '@mui/icons-material/ArrowCircleUp';
 
 const Comments = () => {
   const { expenseId } = useParams<{ expenseId: string }>()
@@ -23,6 +24,7 @@ const Comments = () => {
   });
   const { user: me } = useAuth();
   const queryClient = useQueryClient();
+  const { t } = useTranslation()
   const { mutateAsync } = useMutation({
     mutationFn: async (commentId: string) => {
       return authFetch(`/api/expense/${expenseId}/comment/${commentId}`, {
@@ -45,7 +47,7 @@ const Comments = () => {
 
   return (
     <Stack sx={{ p: 1 }} gap={2}>
-      <Typography variant="h4">Comments</Typography>
+      <Typography variant="h4">{t("comments.title")}</Typography>
       {
         data?.map((comment) => {
           return (
@@ -83,7 +85,7 @@ const Comments = () => {
                   sx={{ width: "100%", display: "flex", justifyContent: "flex-end" }}
                 >
                   <Stack direction="row" alignItems="center" gap={1}>
-                    <span>Create at</span>
+                    <span>{t("comments.createAt")}</span>
                     <span>{dayjs(comment.createAt).format("YYYY/MM/DD HH:mm:ss")}</span>
                   </Stack>
                 </Typography>
@@ -146,12 +148,13 @@ const CommentPostForm = () => {
     <form onSubmit={methods.handleSubmit(onSubmit)}>
       <Stack sx={{
         flexDirection: "row",
+        alignItems: "center",
         width: `calc(100% - ${fullScreen ? DRAWER_WIDTH : '0px'})`,
         position: "fixed",
         bottom: 0,
         left: 0,
-        gap: 2,
-        p: 2,
+        gap: 1,
+        p: 1, pb: 2,
         borderTop: (theme) => `1px solid ${theme.palette.divider}`,
         zIndex: (theme) => theme.zIndex.appBar + 1,
         backgroundColor: (theme) => theme.palette.background.paper,
@@ -170,13 +173,14 @@ const CommentPostForm = () => {
             />
           )}
         />
-        <LoadingButton
+        <IconButton
           type="submit"
           disabled={isPending || !methods.formState.isValid}
-          loading={isPending}
+          // loading={isPending}
+          color="primary"
         >
-          Send
-        </LoadingButton>
+          <ArrowCircleUpIcon fontSize="large" />
+        </IconButton>
       </Stack>
     </form>
   )

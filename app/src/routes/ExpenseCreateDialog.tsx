@@ -17,6 +17,7 @@ import NumericFormatCustom from "../components/NumericFormat";
 import FormattedAmount from "../components/FormattedAmount";
 import { CATEGORIES, getCategory, getCategoryGroup } from "../components/CategoryIcon";
 import Grid from "@mui/material/Unstable_Grid2/Grid2";
+import { useTranslation } from "react-i18next";
 
 interface ExpenseFormValues {
   description: string;
@@ -39,7 +40,7 @@ export default function ExpenseCreateDialog() {
   const { groupId } = useParams<{ groupId: string }>()
   const { enqueueSnackbar } = useSnackbar()
   const methods = useForm<ExpenseFormValues>({})
-
+  const { t } = useTranslation()
   const queryClient = useQueryClient()
   const { mutateAsync, isPending } = useMutation({
     mutationFn: async (values: ExpenseFormValues) => {
@@ -87,7 +88,7 @@ export default function ExpenseCreateDialog() {
 
     <Dialog open fullScreen={fullScreen}>
       <DialogTitle>
-        Expense
+        {t("expense.create_dialog.title")}
       </DialogTitle>
       <IconButton
         aria-label="close"
@@ -145,7 +146,7 @@ export default function ExpenseCreateDialog() {
               loading={methods.formState.isSubmitting}
               disabled={methods.formState.isSubmitting || !methods.formState.isValid || isPending}
             >
-              Create
+              {t("expense.create_dialog.submit_button")}
             </LoadingButton>
           </DialogActions>
         </form>

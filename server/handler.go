@@ -830,3 +830,36 @@ func createThumbnail(storePath string) error {
 	dst = imaging.Paste(dst, thumbnail, image.Pt(0, 0))
 	return imaging.Save(dst, storePath+"-thumbnail")
 }
+
+func (h *APIHandler) getMeSetting(ctx *gin.Context) {
+	setting, err := h.db.GetUserSetting(GetUser(ctx).ID)
+	if err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+	ctx.JSON(http.StatusOK, model.UserSetting{
+		ThemeMode:        setting.ThemeMode,
+		PushNotification: setting.PushNotification,
+	})
+}
+
+func (h *APIHandler) patchMeSetting(ctx *gin.Context) {
+	var req struct {
+		ThemeMode        *string `json:"themeMode"`
+		PushNotification *bool   `json:"pushNotification"`
+	}
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	setting, err := h.db.UpdateUserSetting(GetUser(ctx).ID, req.ThemeMode, req.PushNotification)
+	if err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+	ctx.JSON(http.StatusOK, model.UserSetting{
+		ThemeMode:        setting.ThemeMode,
+		PushNotification: setting.PushNotification,
+	})
+}

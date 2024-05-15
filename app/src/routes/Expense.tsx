@@ -14,6 +14,7 @@ import { PhotoProvider, PhotoView } from "react-photo-view";
 import 'react-photo-view/dist/react-photo-view.css';
 import { PhotoRenderParams } from "react-photo-view/dist/types";
 import { useSnackbar } from "notistack";
+import { useTranslation } from "react-i18next";
 
 
 export default function Expense() {
@@ -26,7 +27,7 @@ export default function Expense() {
   })
 
   const navigate = useNavigate();
-
+  const { t } = useTranslation();
   if (isLoading) {
     return <CircularProgress />
   }
@@ -49,7 +50,10 @@ export default function Expense() {
 
         <Photos />
         <Typography variant="caption">
-          Added by {data?.createdBy?.displayName} on {dayjs(data?.createAt).format("YYYY/MM/DD")}
+          {t("expense.added_by_on", {
+            name: data?.createdBy?.displayName,
+            date: dayjs(data?.createAt).format("YYYY/MM/DD"),
+          })}
         </Typography>
       </Stack>
       <Divider />

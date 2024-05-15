@@ -3,7 +3,9 @@ package sqlite
 import (
 	"context"
 	"database/sql"
+	"embed"
 	"fmt"
+	"io/fs"
 	"strings"
 	"time"
 
@@ -11,6 +13,9 @@ import (
 	"github.com/samber/lo"
 	"github.com/waylen888/tab-buddy/db"
 )
+
+//go:embed schema/**
+var schemaDir embed.FS
 
 var defaultTimeout = time.Second * 5
 
@@ -102,6 +107,28 @@ func (s *sqlite) initialize(ctx context.Context) error {
 			return fmt.Errorf("create table (%s): %w", tableScheme.A, err)
 		}
 	}
+
+	err = fs.WalkDir(schemaDir, ".", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d.IsDir() {
+			return nil
+		}
+		schema, err := schemaDir.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		_, err = tx.ExecContext(ctx, string(schema))
+		if err != nil {
+			return fmt.Errorf("create table (%s): %w", path, err)
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
 	if err := s.prepareCurrency(ctx, tx); err != nil {
 		return fmt.Errorf("prepareCurrency: %w", err)
 	}

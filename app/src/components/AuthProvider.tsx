@@ -12,13 +12,13 @@ const ctx = createContext<{
 const AuthProvider: React.FC<{
   children: React.ReactNode
 }> = ({ children }) => {
-  const { data, error, isLoading } = useQuery<{
-    token: string
-    user: User
-  }>({
+  const { data, error, isLoading } = useQuery({
     queryKey: ['auth', 'refresh_token'],
     queryFn: () => {
-      return authFetch(`/api/auth/refresh_token`)
+      return authFetch<{
+        token: string;
+        user: User;
+      }>(`/api/auth/refresh_token`)
     }
   });
   console.debug(`refresh_token`, `error`)
