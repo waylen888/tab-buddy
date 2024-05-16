@@ -1,11 +1,15 @@
+import { useCallback } from "react"
+import { useAccessToken } from "./store"
 
-export const authFetch = <JSONResponse extends any>(
-  input: RequestInfo | URL, init?: RequestInit & {
-    handleResponse?: (res: Response) => Promise<JSONResponse>
-  } | undefined,
-): Promise<JSONResponse> => {
-  const token = localStorage.getItem("access_token")
-  return fetch(input, {
+export const useAuthFetch = () => {
+  const [token] = useAccessToken()
+
+  return useCallback(<JSONResponse extends unknown>(
+    input: RequestInfo | URL,
+    init?: RequestInit & {
+      handleResponse?: (res: Response) => Promise<JSONResponse>
+    } | undefined,
+  ): Promise<JSONResponse> => fetch(input, {
     headers: {
       "Authorization": `Bearer ${token}`,
       "ngrok-skip-browser-warning": "1",
@@ -13,10 +17,6 @@ export const authFetch = <JSONResponse extends any>(
     },
     ...init,
   }).then((res) => {
-    if (res.status === 401) {
-      localStorage.removeItem("access_token")
-      window.location.href = "/login"
-    }
     if (res.status < 200 || res.status >= 300) {
       throw new Error(res.statusText)
     }
@@ -29,9 +29,5 @@ export const authFetch = <JSONResponse extends any>(
       return res.json()
     }
     return res.blob()
-  })
-}
-
-export const useGetGroup = () => {
-
+  }), [token])
 }

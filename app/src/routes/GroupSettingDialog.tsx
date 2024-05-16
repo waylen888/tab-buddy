@@ -1,7 +1,7 @@
 import { CircularProgress, Dialog, DialogContent, DialogTitle, Divider, IconButton, Stack, Switch, TextField, Typography, useMediaQuery, useTheme } from "@mui/material"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Link, Outlet, useNavigate, useParams } from "react-router-dom"
-import { authFetch } from "../hooks/api"
+import { useAuthFetch } from "../hooks/api"
 import { Group, User } from "../model"
 import CloseIcon from '@mui/icons-material/Close';
 import { Controller, FormProvider, useForm, useFormContext } from "react-hook-form"
@@ -21,7 +21,7 @@ const GroupSettingDialog: React.FC<{}> = () => {
   const handleClose = () => {
     navigate(-1)
   }
-
+  const authFetch = useAuthFetch()
   const { data, isLoading } = useQuery({
     queryKey: ['group', groupId],
     queryFn: () => authFetch<Group>(`/api/group/${groupId}`)
@@ -78,6 +78,7 @@ const Form = () => {
   const { handleSubmit, control, trigger } = useFormContext<GroupModifyFormValues>()
   const { enqueueSnackbar } = useSnackbar()
   const queryClient = useQueryClient()
+  const authFetch = useAuthFetch()
   const { mutateAsync } = useMutation({
     mutationFn: async (values: GroupModifyFormValues) => {
       return await authFetch(`/api/group/${groupId}`, {
@@ -169,6 +170,7 @@ const Form = () => {
 }
 
 const UserList: React.FC<{ groupId: string }> = ({ groupId }) => {
+  const authFetch = useAuthFetch()
   const { data } = useQuery({
     queryKey: ['group', groupId, 'members'],
     queryFn: () => authFetch<User[]>(`/api/group/${groupId}/members`)

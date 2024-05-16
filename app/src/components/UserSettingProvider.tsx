@@ -1,30 +1,34 @@
 import { useQuery } from "@tanstack/react-query"
 import { UserSetting } from "../model"
-import { authFetch } from "../hooks/api"
-import { CircularProgress } from "@mui/material"
-import { createContext, useContext } from "react"
+import { atom, useAtomValue, useSetAtom } from "jotai"
+import { useAuthFetch } from "../hooks/api"
+import { useEffect } from "react"
 
-const ctx = createContext<UserSetting>({} as any)
+const userSettingAtom = atom<UserSetting | null>({
+  themeMode: "light",
+  pushNotification: false,
+})
 
-export const UserSettingProvider: React.FC<{
-  children: React.ReactNode
-}> = ({ children }) => {
-  const { data, isLoading } = useQuery({
-    queryKey: ["me", "setting"],
-    queryFn: () => authFetch<UserSetting>(`/api/me/setting`)
+
+export const useUserSetting = () => useAtomValue(userSettingAtom)
+
+export const UserSettingLoader = () => {
+  const authFetch = useAuthFetch()
+  const { data, dataUpdatedAt } = useQuery({
+    queryKey: ['me', 'setting'],
+    queryFn: () => {
+      return authFetch<UserSetting>(`/api/me/setting`)
+    }
   })
 
-  if (isLoading) {
-    return (
-      <CircularProgress />
-    )
-  }
+  const setUserSetting = useSetAtom(userSettingAtom)
 
-  return (
-    <ctx.Provider value={data}>
-      {children}
-    </ctx.Provider>
-  )
+  useEffect(() => {
+    if (data) {
+      console.debug(`load user setting last update at:`, new Date(dataUpdatedAt).toLocaleString())
+      setUserSetting(data)
+    }
+  }, [data])
+
+  return <></>
 }
-
-export const useUserSetting = () => useContext(ctx)

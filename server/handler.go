@@ -833,7 +833,7 @@ func createThumbnail(storePath string) error {
 
 func (h *APIHandler) getMeSetting(ctx *gin.Context) {
 	setting, err := h.db.GetUserSetting(GetUser(ctx).ID)
-	if err != nil {
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}

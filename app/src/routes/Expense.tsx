@@ -1,7 +1,7 @@
 import { HTMLAttributes } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Outlet, useNavigate, useParams } from "react-router-dom"
-import { authFetch } from "../hooks/api"
+import { useAuthFetch } from "../hooks/api"
 import { ExpensePhoto, ExpenseWithSplitUsers } from "../model"
 import { Button, CircularProgress, Divider, IconButton, Stack, Typography } from "@mui/material"
 import dayjs from "dayjs"
@@ -19,6 +19,7 @@ import { useTranslation } from "react-i18next";
 
 export default function Expense() {
   const { expenseId } = useParams<{ expenseId: string }>()
+  const authFetch = useAuthFetch()
   const { data, isLoading } = useQuery({
     queryKey: ['expense', expenseId],
     queryFn: () => {
@@ -65,6 +66,7 @@ export default function Expense() {
 
 const Photos: React.FC<{}> = () => {
   const { expenseId } = useParams<{ expenseId: string }>()
+  const authFetch = useAuthFetch()
   const { data } = useQuery({
     queryKey: ["expense", expenseId, "photos"],
     queryFn: () => {
@@ -91,6 +93,7 @@ const Photos: React.FC<{}> = () => {
 const Photo: React.FC<{
   photo: ExpensePhoto
 }> = ({ photo }) => {
+  const authFetch = useAuthFetch()
   const { data } = useQuery({
     queryKey: ["static", "photo", photo.id],
     queryFn: () => {
@@ -119,7 +122,7 @@ const Photo: React.FC<{
 const BigPhoto: React.FC<{
   photo: ExpensePhoto
 } & HTMLAttributes<HTMLDivElement> & PhotoRenderParams> = ({ photo, scale, ...attrs }) => {
-
+  const authFetch = useAuthFetch()
   const { data, isLoading } = useQuery({
     queryKey: ["static", "photo", photo.id],
     queryFn: () => {
@@ -151,6 +154,7 @@ const ImageUploadButton = () => {
   const { expenseId } = useParams<{ expenseId: string }>()
   const queryClient = useQueryClient()
   const { enqueueSnackbar } = useSnackbar()
+  const authFetch = useAuthFetch()
   const { mutateAsync } = useMutation({
     mutationFn: async (formData: FormData) => {
       return await authFetch(`/api/expense/${expenseId}/photos`, {

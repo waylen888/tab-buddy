@@ -3,7 +3,7 @@ import { Controller, FormProvider, useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSnackbar } from "notistack";
-import { authFetch } from "../hooks/api";
+import { useAuthFetch } from "../hooks/api";
 import { LoadingButton } from "@mui/lab";
 import CloseIcon from '@mui/icons-material/Close';
 
@@ -15,7 +15,7 @@ export default function GroupDialog() {
   const navigate = useNavigate()
   const { enqueueSnackbar } = useSnackbar()
   const methods = useForm<GroupCreateForm>({})
-
+  const authFetch = useAuthFetch()
   const queryClient = useQueryClient()
   const { mutateAsync, isPending } = useMutation({
     mutationFn: async (values: GroupCreateForm) => {

@@ -3,7 +3,7 @@ import { Controller, FormProvider, useForm, useFormContext } from "react-hook-fo
 import { useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSnackbar } from "notistack";
-import { authFetch } from "../hooks/api";
+import { useAuthFetch } from "../hooks/api";
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -17,6 +17,7 @@ import NumericFormatCustom from "../components/NumericFormat";
 import FormattedAmount from "../components/FormattedAmount";
 import { CATEGORIES, getCategory, getCategoryGroup } from "../components/CategoryIcon";
 import Grid from "@mui/material/Unstable_Grid2/Grid2";
+import { useLastUsedCurrency } from "../hooks/store";
 
 interface ExpenseFormValues {
   description: string;
@@ -37,6 +38,7 @@ export default function ExpenseEditDialog() {
   const navigate = useNavigate()
   const { groupId, expenseId } = useParams<{ groupId: string; expenseId: string }>()
   const { enqueueSnackbar } = useSnackbar()
+  const authFetch = useAuthFetch()
   const [
     { data, isLoading },
     { data: users },
@@ -201,14 +203,19 @@ export default function ExpenseEditDialog() {
 
 const CurrencyField = () => {
   const { control } = useFormContext<ExpenseFormValues>()
+  const authFetch = useAuthFetch()
   const { data, isLoading } = useQuery({
     queryKey: ['currencies'],
     queryFn: () => authFetch<Currency[]>('/api/currencies'),
   })
+  const [lastUsedCurrency, setLastUsedCurrency] = useLastUsedCurrency()
+
+
   if (isLoading) {
     return <CircularProgress />
   }
-  const defaultValue = data?.find((currency) => currency.code === localStorage.getItem("lastUsedCurrency"))
+
+  const defaultValue = data?.find((currency) => currency.code === lastUsedCurrency)
     ?? data?.[0];
 
   return (
@@ -231,7 +238,7 @@ const CurrencyField = () => {
           onChange={(_, value) => {
             if (value) {
               field.onChange(value)
-              localStorage.setItem("lastUsedCurrency", value.code)
+              setLastUsedCurrency(value.code)
             }
           }}
         />

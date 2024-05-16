@@ -1,12 +1,19 @@
 
 import { Navigate } from "react-router-dom";
+import { useAccessToken } from "../hooks/store";
+import { useEffect } from "react";
 
 const SetToken = () => {
   let urlParams = new URLSearchParams(window.location.search);
-  console.debug("urlParams", urlParams)
-  localStorage.setItem("access_token", urlParams.get('access_token'))
+  const setAccessToken = useAccessToken()[1]
+  useEffect(() => {
+    console.debug("urlParams", urlParams)
+    if (urlParams.get('access_token')) {
+      setAccessToken(urlParams.get('access_token'))
+    }
+  }, [urlParams])
   return (
-    <Navigate to="/" />
+    <Navigate to="/login" />
   )
 }
 

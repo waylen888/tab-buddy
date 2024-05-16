@@ -21,7 +21,8 @@ import SetToken from './routes/SetToken';
 import ExpenseEditDialog from './routes/ExpenseEditDialog';
 
 import "./i18n";
-import { DefaultThemeProvider, ThemeProvider } from './components/ThemeProvider';
+import { ThemeProvider } from './components/ThemeProvider';
+import { Provider } from "jotai"
 
 const router = createBrowserRouter([
   {
@@ -91,7 +92,9 @@ const router = createBrowserRouter([
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <DefaultThemeProvider>
+    {/* <Provider> */}
+    {/* <UserSettingProvider> */}
+    <ThemeProvider>
       <CssBaseline />
       {/* <GlobalStyles
         styles={{
@@ -105,6 +108,8 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           <RouterProvider router={router} fallbackElement={null} />
         </SnackbarProvider>
       </QueryClientProvider>
-    </DefaultThemeProvider>
+    </ThemeProvider>
+    {/* </UserSettingProvider> */}
+    {/* </Provider> */}
   </React.StrictMode>,
 )

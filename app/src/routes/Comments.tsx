@@ -1,10 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
-import { authFetch } from "../hooks/api";
+import { useAuthFetch } from "../hooks/api";
 import { Comment } from "../model";
-import { Box, Divider, IconButton, Paper, Stack, TextField, Typography, useMediaQuery, useTheme } from "@mui/material";
+import { Box, IconButton, Paper, Stack, TextField, Typography, useMediaQuery, useTheme } from "@mui/material";
 import { Controller, useForm } from "react-hook-form";
-import { LoadingButton } from "@mui/lab";
 import { useSnackbar } from "notistack";
 import dayjs from "dayjs";
 import { DRAWER_WIDTH } from "../components/NavBar";
@@ -16,7 +15,8 @@ import ArrowCircleUpIcon from '@mui/icons-material/ArrowCircleUp';
 
 const Comments = () => {
   const { expenseId } = useParams<{ expenseId: string }>()
-  const { data, isLoading } = useQuery({
+  const authFetch = useAuthFetch()
+  const { data } = useQuery({
     queryKey: ["expense", expenseId, "comments"],
     queryFn: ({ signal }) => {
       return authFetch<Comment[]>(`/api/expense/${expenseId}/comments`, { signal })
@@ -110,6 +110,7 @@ interface CommentPostFormValues {
 const CommentPostForm = () => {
   const { expenseId } = useParams<{ expenseId: string }>()
   const queryClient = useQueryClient();
+  const authFetch = useAuthFetch()
   const { mutateAsync, isPending } = useMutation({
     mutationFn: (values: CommentPostFormValues) => {
       return authFetch(`/api/expense/${expenseId}/comment`, {

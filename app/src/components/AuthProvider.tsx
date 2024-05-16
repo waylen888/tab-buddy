@@ -1,9 +1,13 @@
-import { useQuery } from "@tanstack/react-query"
 import { createContext, useContext, useEffect } from "react";
-import { User } from "../model";
+import { Backdrop, CircularProgress } from "@mui/material";
+import { useQuery } from "@tanstack/react-query"
 import { Navigate } from "react-router-dom";
-import { authFetch } from "../hooks/api";
-import { CircularProgress } from "@mui/material";
+
+import { User } from "../model";
+import { useAuthFetch } from "../hooks/api";
+import { UserSettingLoader } from "./UserSettingProvider";
+import { useAccessToken } from "../hooks/store";
+import { RESET } from "jotai/utils";
 
 const ctx = createContext<{
   user: User
@@ -12,32 +16,33 @@ const ctx = createContext<{
 const AuthProvider: React.FC<{
   children: React.ReactNode
 }> = ({ children }) => {
-  const { data, error, isLoading } = useQuery({
-    queryKey: ['auth', 'refresh_token'],
+  const authFetch = useAuthFetch()
+  const { data, error, isLoading, dataUpdatedAt } = useQuery({
+    queryKey: ["auth", "refresh_token"],
     queryFn: () => {
       return authFetch<{
         token: string;
         user: User;
       }>(`/api/auth/refresh_token`)
-    }
-  });
-  console.debug(`refresh_token`, `error`)
+    },
+  })
+  const [accessToken, setAccessToken] = useAccessToken()
 
   useEffect(() => {
     if (data?.token) {
-      localStorage.setItem('access_token', data.token)
+      console.log(`refresh_token`, new Date(dataUpdatedAt).toLocaleString());
+      setAccessToken(data.token)
     }
   }, [data?.token])
 
   if (isLoading) {
     return (
-      <CircularProgress />
+      <Backdrop open>
+        <CircularProgress />
+      </Backdrop>
     )
-  }
-  console.log(data)
-  if (error || !data?.user) {
-    console.debug(`refresh_token`, error)
-    localStorage.removeItem("access_token")
+  } else if (error || !data?.token || !accessToken) {
+    setAccessToken(RESET)
     return (
       <Navigate to="/login" />
     )
@@ -45,6 +50,7 @@ const AuthProvider: React.FC<{
 
   return (
     <ctx.Provider value={{ user: data.user }}>
+      <UserSettingLoader />
       {children}
     </ctx.Provider>
   )

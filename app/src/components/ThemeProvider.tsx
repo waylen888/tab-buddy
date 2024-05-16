@@ -2,15 +2,12 @@ import { ThemeProvider as MuiThemeProvider, PaletteMode, createTheme, useMediaQu
 import { ReactNode, useMemo } from 'react';
 import { useUserSetting } from './UserSettingProvider';
 
-export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const setting = useUserSetting()
+const useTheme = () => {
   const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
-
+  const setting = useUserSetting()
   const theme = useMemo(() => createTheme({
     palette: {
-      mode: !!setting.themeMode
-        ? setting.themeMode as PaletteMode
-        : (prefersDarkMode ? 'dark' : 'light'),
+      mode: (setting?.themeMode as PaletteMode) || (prefersDarkMode ? "dark" : "light"),
     },
     components: {
       MuiTextField: {
@@ -30,35 +27,11 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       },
     }
   }), [setting, prefersDarkMode])
-
-  return (
-    <MuiThemeProvider theme={theme}>
-      {children}
-    </MuiThemeProvider>
-  )
+  return theme
 }
 
-export const DefaultThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const theme = useMemo(() => createTheme({
-    components: {
-      MuiTextField: {
-        defaultProps: {
-          size: "small",
-        }
-      },
-      MuiSelect: {
-        defaultProps: {
-          size: "small",
-        }
-      },
-      MuiDialog: {
-        defaultProps: {
-          fullWidth: true,
-        }
-      },
-    }
-  }), [])
-
+export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const theme = useTheme();
   return (
     <MuiThemeProvider theme={theme}>
       {children}

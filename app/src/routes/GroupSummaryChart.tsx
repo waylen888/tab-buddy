@@ -12,7 +12,7 @@ import { Chart } from 'chart.js/auto'
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import CloseIcon from '@mui/icons-material/Close';
 import { useQuery } from "@tanstack/react-query";
-import { authFetch } from "../hooks/api";
+import { useAuthFetch } from "../hooks/api";
 import { format } from "../components/FormattedAmount";
 
 export const SummaryButton = ({ groupId }: { groupId: string; }) => {
@@ -36,7 +36,7 @@ function SummaryChart({ open, onClose, groupId }: {
   onClose: () => void
   groupId: string;
 }) {
-
+  const authFetch = useAuthFetch()
   const { data } = useQuery({
     queryKey: ["group", groupId, "expenses", "to_twd", true],
     queryFn: () => authFetch<GroupExpense[]>(`/api/group/${groupId}/expenses?to_twd=true`),

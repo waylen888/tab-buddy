@@ -42,18 +42,18 @@ func jwtTokenCheck(db db.Database) gin.HandlerFunc {
 
 		token, err := parseToken(jwtToken)
 		if err != nil {
-			ctx.AbortWithError(http.StatusBadRequest, err)
+			ctx.AbortWithError(http.StatusUnauthorized, err)
 			return
 		}
 
 		claims, ok := token.Claims.(jwt.MapClaims)
 		if !ok {
-			ctx.AbortWithError(http.StatusInternalServerError, err)
+			ctx.AbortWithError(http.StatusUnauthorized, err)
 			return
 		}
 		username, ok := claims["username"].(string)
 		if !ok {
-			ctx.AbortWithError(http.StatusInternalServerError, err)
+			ctx.AbortWithError(http.StatusUnauthorized, err)
 			return
 		}
 		user, err := db.GetUserByUsername(username)

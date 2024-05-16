@@ -4,11 +4,12 @@ import { Controller, FormProvider, useForm } from "react-hook-form";
 import { User } from "../model";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useSnackbar } from "notistack";
-import { authFetch } from "../hooks/api";
+import { useAuthFetch } from "../hooks/api";
 import { LoadingButton } from "@mui/lab";
 
 import LoginIcon from '@mui/icons-material/Login';
 import GoogleIcon from '@mui/icons-material/Google';
+import { useAccessToken } from "../hooks/store";
 
 interface LoginForm {
   username: string;
@@ -17,7 +18,9 @@ interface LoginForm {
 
 const Login = () => {
   const navigate = useNavigate()
+  const [accessToken, setAccessToken] = useAccessToken()
   const { enqueueSnackbar } = useSnackbar()
+  const authFetch = useAuthFetch()
   const { mutateAsync, isPending } = useMutation({
     mutationFn: (data: LoginForm) => {
       return authFetch<{ token: string; user: User; }>(
@@ -38,14 +41,15 @@ const Login = () => {
   const onSubmit = async (data: LoginForm) => {
     try {
       const { token } = await mutateAsync(data)
-      localStorage.setItem('access_token', token)
+      setAccessToken(token)
       navigate('/')
     } catch (err) {
       enqueueSnackbar((err as Error).message, { variant: 'error' })
     }
   }
 
-  if (localStorage.getItem('access_token')) {
+  if (accessToken) {
+    console.debug(`detect accessToken in local`, accessToken, typeof accessToken)
     return <Navigate to="/" />
   }
 

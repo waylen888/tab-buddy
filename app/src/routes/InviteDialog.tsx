@@ -2,7 +2,7 @@ import { LoadingButton } from "@mui/lab"
 import { Dialog, DialogActions, DialogContent, DialogTitle, IconButton, TextField } from "@mui/material"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { Controller, useForm } from "react-hook-form"
-import { authFetch } from "../hooks/api"
+import { useAuthFetch } from "../hooks/api"
 import { useNavigate, useParams } from "react-router-dom"
 import { useSnackbar } from "notistack"
 import CloseIcon from '@mui/icons-material/Close';
@@ -14,6 +14,7 @@ interface InviteFormValues {
 const InviteDialog = () => {
   const { groupId } = useParams<{ groupId: string }>()
   const queryClient = useQueryClient();
+  const authFetch = useAuthFetch()
   const { mutateAsync, isPending } = useMutation({
     mutationFn: (data: InviteFormValues) => {
       return authFetch(`/api/group/${groupId}/invite`, {

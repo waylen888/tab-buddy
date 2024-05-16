@@ -1,16 +1,19 @@
 
-import { Group, GroupExpense, User } from "../model"
-import { Link, Outlet, useNavigate, useParams } from "react-router-dom"
+import { Group, GroupExpense } from "../model"
+import { Outlet, useNavigate, useParams } from "react-router-dom"
 import { useQuery } from "@tanstack/react-query"
-import { authFetch } from "../hooks/api"
-import { Box, Button, IconButton, Stack, Typography } from "@mui/material";
+import { useAuthFetch } from "../hooks/api"
+import { Box, IconButton, Stack, Typography } from "@mui/material";
 import GroupExpenses from "./GroupExpenses";
 import GroupDebt from "./GroupDebt";
 import SettingsIcon from '@mui/icons-material/Settings';
 import { SummaryButton } from "./GroupSummaryChart";
+import { useSetAtom } from "jotai";
+import { navAtom } from "../components/MobileNavBar";
 
 export default function GroupRoute() {
   const { groupId } = useParams<{ groupId: string }>();
+  const authFetch = useAuthFetch()
   const { data } = useQuery({
     queryKey: ['group', groupId],
     queryFn: () => authFetch<Group>(`/api/group/${groupId}`)
@@ -21,6 +24,15 @@ export default function GroupRoute() {
     queryFn: () => authFetch<GroupExpense[]>(`/api/group/${groupId}/expenses`)
   })
   const navigate = useNavigate()
+
+  const setNav = useSetAtom(navAtom)
+
+  setNav((prevNav) => ({
+    ...prevNav,
+    handleBackButton: () => {
+      navigate(-1);
+    }
+  }))
 
   return (
     <div>

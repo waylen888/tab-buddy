@@ -3,7 +3,7 @@ import { Controller, FormProvider, useForm, useFormContext } from "react-hook-fo
 import { useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSnackbar } from "notistack";
-import { authFetch } from "../hooks/api";
+import { useAuthFetch } from "../hooks/api";
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -18,6 +18,8 @@ import FormattedAmount from "../components/FormattedAmount";
 import { CATEGORIES, getCategory, getCategoryGroup } from "../components/CategoryIcon";
 import Grid from "@mui/material/Unstable_Grid2/Grid2";
 import { useTranslation } from "react-i18next";
+import { useLastUsedCurrency } from "../hooks/store";
+
 
 interface ExpenseFormValues {
   description: string;
@@ -42,6 +44,7 @@ export default function ExpenseCreateDialog() {
   const methods = useForm<ExpenseFormValues>({})
   const { t } = useTranslation()
   const queryClient = useQueryClient()
+  const authFetch = useAuthFetch()
   const { mutateAsync, isPending } = useMutation({
     mutationFn: async (values: ExpenseFormValues) => {
       return authFetch(`/api/group/${groupId}/expense`, {
@@ -158,14 +161,16 @@ export default function ExpenseCreateDialog() {
 
 const CurrencyField = () => {
   const { control } = useFormContext<ExpenseFormValues>()
+  const authFetch = useAuthFetch()
   const { data, isLoading } = useQuery({
     queryKey: ['currencies'],
     queryFn: () => authFetch<Currency[]>('/api/currencies'),
   })
+  const [lastUsedCurrency, setLastUsedCurrency] = useLastUsedCurrency()
   if (isLoading) {
     return <CircularProgress />
   }
-  const defaultValue = data?.find((currency) => currency.code === localStorage.getItem("lastUsedCurrency"))
+  const defaultValue = data?.find((currency) => currency.code === lastUsedCurrency)
     ?? data?.[0];
 
   return (
@@ -188,7 +193,7 @@ const CurrencyField = () => {
           onChange={(_, value) => {
             if (value) {
               field.onChange(value)
-              localStorage.setItem("lastUsedCurrency", value.code)
+              setLastUsedCurrency(value.code)
             }
           }}
         />
@@ -227,6 +232,7 @@ const PaymentOptions: React.FC<{
   groupId: string
 }> = ({ groupId }) => {
   const { watch, setValue, control } = useFormContext<ExpenseFormValues>()
+  const authFetch = useAuthFetch()
   const { data } = useQuery({
     queryKey: ['group', groupId, 'members'],
     queryFn: () => authFetch<User[]>(`/api/group/${groupId}/members`),
