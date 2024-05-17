@@ -73,7 +73,7 @@ export default function ExpenseCreateDialog() {
     try {
       console.debug(`submit`, values)
       await mutateAsync(values)
-      navigate(-1)
+      navigate("..")
       enqueueSnackbar(`expense created`, { variant: 'success' })
     } catch (err) {
       enqueueSnackbar((err as Error).message, { variant: 'error' })
@@ -81,7 +81,7 @@ export default function ExpenseCreateDialog() {
     }
   }
   const handleClose = () => {
-    navigate(-1)
+    navigate("..")
   }
 
   const theme = useTheme()
@@ -355,7 +355,7 @@ const CategoryField = () => {
               ...params.InputProps,
               startAdornment: (
                 <InputAdornment position="start">
-                  {getCategory(field.value).icon}
+                  {getCategory(field.value)?.icon}
                 </InputAdornment>
               ),
             }}
@@ -378,7 +378,7 @@ const CategoryField = () => {
               </li>
             )
           }}
-          groupBy={(option) => getCategoryGroup(option.key).title}
+          groupBy={(option) => getCategoryGroup(option.key)?.title ?? ""}
           renderGroup={(params) => (
             <li key={params.key}>
               <GroupHeader>{params.group}</GroupHeader>

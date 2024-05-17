@@ -1,5 +1,5 @@
 import { Fragment, ReactNode } from "react"
-import { Box, Fab, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, tableCellClasses } from "@mui/material"
+import { Box, Fab, IconButton, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, tableCellClasses } from "@mui/material"
 import { useNavigate } from "react-router-dom"
 import { Currency, GroupExpense, User } from "../model"
 import dayjs from "dayjs"
@@ -8,6 +8,7 @@ import { useAuth } from "../components/AuthProvider"
 import FormattedAmount from "../components/FormattedAmount"
 import CategoryIcon from "../components/CategoryIcon"
 import { useTranslation } from "react-i18next"
+import { NavRightToolBar } from "../components/NavBar"
 
 const GroupExpenses: React.FC<{
   data: GroupExpense[] | undefined;
@@ -40,6 +41,13 @@ const GroupExpenses: React.FC<{
 
   return (
     <Stack gap={1}>
+
+      <NavRightToolBar>
+        <IconButton size="large" color="inherit" onClick={handleAdd}>
+          <AddIcon />
+        </IconButton>
+      </NavRightToolBar>
+
       <TableContainer>
         <Table stickyHeader size="small">
           {
@@ -108,21 +116,6 @@ const GroupExpenses: React.FC<{
           }
         </Table>
       </TableContainer>
-
-      <Box
-        sx={{ height: "70px", /* for Fab padding */ }}
-      >
-        <Fab
-          color="primary"
-          onClick={handleAdd}
-          sx={{
-            position: 'fixed',
-            bottom: 16,
-            right: 16,
-          }}>
-          <AddIcon />
-        </Fab>
-      </Box>
     </Stack >
   )
 }

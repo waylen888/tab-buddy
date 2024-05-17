@@ -1,34 +1,39 @@
-import { Box, CssBaseline, Toolbar, useMediaQuery, useTheme } from '@mui/material'
+import { Box, Toolbar, useMediaQuery, useTheme } from '@mui/material'
 import NavBar, { DRAWER_WIDTH } from '../components/NavBar'
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
-import AuthProvider from '../components/AuthProvider'
-import { useSetAtom } from 'jotai'
-import { navAtom } from '../components/MobileNavBar'
+import BottomNavBar from '../components/BottomNavBar';
 
 function Layout() {
   const theme = useTheme()
   const fullScreen = useMediaQuery(theme.breakpoints.up('md'));
   const { pathname } = useLocation();
-  const setNav = useSetAtom(navAtom)
-  setNav((prevNav) => ({
-    ...prevNav,
-    handleBackButton: undefined,
-  }))
 
   if (pathname === "/") {
     return <Navigate to="groups" />
   }
 
+  const showBottomNavigation = !fullScreen
   return (
-    <AuthProvider>
-      <CssBaseline />
+    <>
       <NavBar />
-      <Box component="main" sx={{ flexGrow: 1, paddingLeft: fullScreen ? DRAWER_WIDTH : 0 }}>
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          paddingLeft: fullScreen ? DRAWER_WIDTH : 0,
+          pb: showBottomNavigation ? 7 : 0,
+        }}
+      >
         <Toolbar />{/* for padding */}
-        MainLayout
         <Outlet />
       </Box>
-    </AuthProvider>
+
+      {
+        showBottomNavigation
+          ? <BottomNavBar />
+          : null
+      }
+    </>
   )
 }
 

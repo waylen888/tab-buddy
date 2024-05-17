@@ -2,7 +2,7 @@ import { Button, CssBaseline, TextField, Stack } from "@mui/material";
 import { useMutation } from "@tanstack/react-query";
 import { Controller, FormProvider, useForm } from "react-hook-form";
 import { User } from "../model";
-import { Navigate, useNavigate } from "react-router-dom";
+import { Navigate, redirect } from "react-router-dom";
 import { useSnackbar } from "notistack";
 import { useAuthFetch } from "../hooks/api";
 import { LoadingButton } from "@mui/lab";
@@ -17,7 +17,7 @@ interface LoginForm {
 }
 
 const Login = () => {
-  const navigate = useNavigate()
+
   const [accessToken, setAccessToken] = useAccessToken()
   const { enqueueSnackbar } = useSnackbar()
   const authFetch = useAuthFetch()
@@ -42,7 +42,7 @@ const Login = () => {
     try {
       const { token } = await mutateAsync(data)
       setAccessToken(token)
-      navigate('/')
+      redirect('/')
     } catch (err) {
       enqueueSnackbar((err as Error).message, { variant: 'error' })
     }

@@ -26,6 +26,12 @@
   },
   "comments": {
     "title": "Comments",
-    "createAt": "Create At"
+    "createAt": "Create At",
+    "no_comments": "No comments yet..."
+  },
+  "bottom_nav": {
+    "friends": "Friends",
+    "groups": "Groups",
+    "settings": "Settings"
   }
 }

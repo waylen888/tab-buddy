@@ -8,7 +8,7 @@ import { getCategory } from "../components/CategoryIcon";
 
 
 import AutoSizer from "react-virtualized-auto-sizer";
-import { Chart } from 'chart.js/auto'
+import { Chart, ChartTypeRegistry } from 'chart.js/auto'
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import CloseIcon from '@mui/icons-material/Close';
 import { useQuery } from "@tanstack/react-query";
@@ -49,7 +49,7 @@ function SummaryChart({ open, onClose, groupId }: {
       summary.expenses.push({
         id: expense.category,
         value: Number(expense.amount),
-        label: getCategory(expense.category).name,
+        label: getCategory(expense.category)?.name ?? "",
       })
     } else {
       sum.value += Number(expense.amount)
@@ -70,21 +70,24 @@ function SummaryChart({ open, onClose, groupId }: {
   //   return `${(percent * 100).toFixed(0)}%`;
   // };
   const getLabel = (value: number) => {
+    if (!summary?.total) {
+      return `0%`
+    }
     const percent = value / summary.total;
     return `${(percent * 100).toFixed(0)}%`;
   };
 
 
-  const chartRef = useRef<Chart>(null)
+  const chartRef = useRef<Chart<keyof ChartTypeRegistry, number[] | undefined, string>>()
   const setRef = useCallback((ref: HTMLCanvasElement) => {
     if (!open || !ref) {
       return
     }
 
     console.debug(data)
-    chartRef.current?.destroy()
+    chartRef.current?.destroy();
     chartRef.current = new Chart(
-      ref.getContext("2d"),
+      ref.getContext("2d")!,
       {
         type: 'pie',
         data: {

@@ -1,6 +1,6 @@
-import React from 'react'
+import React, { Suspense, lazy } from 'react'
 import ReactDOM from 'react-dom/client'
-import { Outlet, RouterProvider, createBrowserRouter, useLocation } from 'react-router-dom';
+import { Route, RouterProvider, createBrowserRouter, createRoutesFromElements } from 'react-router-dom';
 import Layout from './routes/Layout';
 import Groups from './routes/Groups';
 import Group from './routes/Group';
@@ -13,7 +13,7 @@ import QueryClientProvider from './components/QueryClientProvider';
 
 import { SnackbarProvider } from 'notistack';
 import GroupDialog from './routes/GroupDialog';
-import { CssBaseline, GlobalStyles, createTheme } from '@mui/material';
+import { CssBaseline } from '@mui/material';
 import InviteDialog from './routes/InviteDialog';
 import Expense from './routes/Expense';
 import GroupSettingDialog from './routes/GroupSettingDialog';
@@ -22,72 +22,41 @@ import ExpenseEditDialog from './routes/ExpenseEditDialog';
 
 import "./i18n";
 import { ThemeProvider } from './components/ThemeProvider';
-import { Provider } from "jotai"
 
-const router = createBrowserRouter([
-  {
-    path: "/login",
-    element: <Login />
-  },
-  {
-    path: "/set-token",
-    element: <SetToken />
-  },
+import AuthProvider from './components/AuthProvider';
+import ExpenseIndex from './routes/ExpenseIndex';
 
-  {
-    path: "/",
-    element: <Layout />,
-    children: [
-      {
-        path: "groups",
-        element: <Groups />,
-        children: [
-          {
-            path: "create",
-            element: <GroupDialog />,
-          },
-        ],
-      },
-      {
-        path: "group/:groupId",
-        children: [
-          {
-            path: "",
-            element: <Group />,
-            children: [
-              {
-                path: "create/expense",
-                element: <ExpenseCreateDialog />
-              },
-              {
-                path: "setting",
-                element: <GroupSettingDialog />,
-                children: [
-                  {
-                    path: "invite",
-                    element: <InviteDialog />
-                  },
-                ],
-              },
+const Settings = lazy(() => import("./routes/Settings"))
 
-            ],
-          },
-          {
-            path: "expense/:expenseId",
-            element: <Expense />,
-            children: [
-              {
-                path: "edit",
-                element: <ExpenseEditDialog />
-              },
+const router = createBrowserRouter(
+  createRoutesFromElements(
+    <>
+      <Route path="/login" element={<Login />} index />
+      <Route path="/set-token" element={<SetToken />} index />
+      <Route path="/" element={<AuthProvider><Layout /></AuthProvider>}>
+        <Route path="friends" element={<div>My Friends</div>}>
 
-            ],
-          },
-        ],
-      },
-    ],
-  },
-])
+        </Route>
+
+        <Route path="groups" element={<Groups />} >
+          <Route path="create" element={<GroupDialog />} />
+        </Route>
+        <Route path="group/:groupId">
+          <Route element={<Group />} index />
+          <Route path="create/expense" element={<ExpenseCreateDialog />} />
+          <Route path="setting" element={<GroupSettingDialog />}>
+            <Route path="invite" element={<InviteDialog />} />
+          </Route>
+          <Route path="expense/:expenseId" element={<Expense />}>
+            <Route path="edit" element={<ExpenseEditDialog />} />
+          </Route>
+          <Route path="expense" element={<ExpenseIndex />} index />
+        </Route>
+        <Route path="settings" element={<Suspense fallback="loading"><Settings /></Suspense>} />
+      </Route>
+    </>
+  )
+)
 
 
 ReactDOM.createRoot(document.getElementById('root')!).render(

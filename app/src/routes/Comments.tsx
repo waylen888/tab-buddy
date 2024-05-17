@@ -49,54 +49,56 @@ const Comments = () => {
     <Stack sx={{ p: 1 }} gap={2}>
       <Typography variant="h4">{t("comments.title")}</Typography>
       {
-        data?.map((comment) => {
-          return (
-            <Paper key={comment.id} sx={{ p: 1 }} elevation={1}>
-              <Stack gap={1}>
-                <Stack direction="row" alignItems="center" justifyContent="space-between">
-                  <Typography variant="h6" sx={{ color: "primary.main" }}>
-                    {comment.displayName}
-                  </Typography>
-                  <IconButton
-                    color="error"
-                    onClick={handleDelete(comment.id)}
+        data && data.length === 0
+          ? <Typography>{t("comments.no_comments")}</Typography>
+          : data?.map((comment) => {
+            return (
+              <Paper key={comment.id} sx={{ p: 1 }} elevation={1}>
+                <Stack gap={1}>
+                  <Stack direction="row" alignItems="center" justifyContent="space-between">
+                    <Typography variant="h6" sx={{ color: "primary.main" }}>
+                      {comment.displayName}
+                    </Typography>
+                    <IconButton
+                      color="error"
+                      onClick={handleDelete(comment.id)}
+                      sx={{
+                        display: me.id === comment.createBy ? undefined : "none",
+                      }}
+                    >
+                      <DeleteIcon />
+                    </IconButton>
+                  </Stack>
+
+
+                  <Typography
                     sx={{
-                      display: me.id === comment.createBy ? undefined : "none",
-                    }}
+                      display: "flex",
+                      wordBreak: "break-all",
+                      whiteSpace: "pre-wrap",
+                    }}>
+                    <Linkify>
+                      {comment.content}
+                    </Linkify>
+                  </Typography>
+
+                  <Typography
+                    variant="caption"
+                    sx={{ width: "100%", display: "flex", justifyContent: "flex-end" }}
                   >
-                    <DeleteIcon />
-                  </IconButton>
+                    <Stack direction="row" alignItems="center" gap={1}>
+                      <span>{t("comments.createAt")}</span>
+                      <span>{dayjs(comment.createAt).format("YYYY/MM/DD HH:mm:ss")}</span>
+                    </Stack>
+                  </Typography>
                 </Stack>
 
-
-                <Typography
-                  sx={{
-                    display: "flex",
-                    wordBreak: "break-all",
-                    whiteSpace: "pre-wrap",
-                  }}>
-                  <Linkify>
-                    {comment.content}
-                  </Linkify>
-                </Typography>
-
-                <Typography
-                  variant="caption"
-                  sx={{ width: "100%", display: "flex", justifyContent: "flex-end" }}
-                >
-                  <Stack direction="row" alignItems="center" gap={1}>
-                    <span>{t("comments.createAt")}</span>
-                    <span>{dayjs(comment.createAt).format("YYYY/MM/DD HH:mm:ss")}</span>
-                  </Stack>
-                </Typography>
-              </Stack>
-
-            </Paper>
-          )
-        })
+              </Paper>
+            )
+          })
       }
       <CommentPostForm />
-      <Box sx={{ height: "120px" }} />
+      <Box sx={{ height: "60px" }} />
     </Stack>
   )
 }
@@ -155,7 +157,7 @@ const CommentPostForm = () => {
         bottom: 0,
         left: 0,
         gap: 1,
-        p: 1, pb: 2,
+        p: 1, pb: 8,
         borderTop: (theme) => `1px solid ${theme.palette.divider}`,
         zIndex: (theme) => theme.zIndex.appBar + 1,
         backgroundColor: (theme) => theme.palette.background.paper,

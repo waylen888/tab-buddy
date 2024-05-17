@@ -1,4 +1,4 @@
-import { HTMLAttributes } from "react";
+import { HTMLAttributes, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Outlet, useNavigate, useParams } from "react-router-dom"
 import { useAuthFetch } from "../hooks/api"
@@ -15,9 +15,11 @@ import 'react-photo-view/dist/react-photo-view.css';
 import { PhotoRenderParams } from "react-photo-view/dist/types";
 import { useSnackbar } from "notistack";
 import { useTranslation } from "react-i18next";
+import { NavBackButton, NavLeftToolBar, NavRightToolBar } from "../components/NavBar";
 
 
 export default function Expense() {
+
   const { expenseId } = useParams<{ expenseId: string }>()
   const authFetch = useAuthFetch()
   const { data, isLoading } = useQuery({
@@ -26,23 +28,28 @@ export default function Expense() {
       return authFetch<ExpenseWithSplitUsers>(`/api/expense/${expenseId}`)
     }
   })
-
   const navigate = useNavigate();
   const { t } = useTranslation();
-  if (isLoading) {
+
+  if (isLoading || !data) {
     return <CircularProgress />
   }
 
   return (
     <Stack gap={2}>
-      <Stack sx={{ p: 1 }}>
-        <Stack direction="row" gap={2}>
-          <Typography variant="h4">{data?.description}</Typography>
-          <IconButton onClick={() => navigate("edit")}>
-            <ModeEditIcon />
-          </IconButton>
-          <ImageUploadButton />
+      <NavLeftToolBar>
+        <NavBackButton />
+      </NavLeftToolBar>
+      <NavRightToolBar>
+        <IconButton size="large" color="inherit" onClick={() => navigate("edit")}>
+          <ModeEditIcon />
+        </IconButton>
+      </NavRightToolBar>
 
+      <Stack sx={{ p: 1 }}>
+        <Stack direction="row" gap={2} alignItems="center">
+          <Typography variant="h4">{data?.description}</Typography>
+          <ImageUploadButton />
         </Stack>
 
         <Typography>

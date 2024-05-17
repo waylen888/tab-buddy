@@ -19,7 +19,7 @@ const GroupSettingDialog: React.FC<{}> = () => {
   const fullScreen = useMediaQuery(theme.breakpoints.down('md'));
   const navigate = useNavigate();
   const handleClose = () => {
-    navigate(-1)
+    navigate("..")
   }
   const authFetch = useAuthFetch()
   const { data, isLoading } = useQuery({

@@ -1,6 +1,6 @@
 
 import { Group, GroupExpense } from "../model"
-import { Outlet, useNavigate, useParams } from "react-router-dom"
+import { useNavigate, useParams } from "react-router-dom"
 import { useQuery } from "@tanstack/react-query"
 import { useAuthFetch } from "../hooks/api"
 import { Box, IconButton, Stack, Typography } from "@mui/material";
@@ -8,10 +8,10 @@ import GroupExpenses from "./GroupExpenses";
 import GroupDebt from "./GroupDebt";
 import SettingsIcon from '@mui/icons-material/Settings';
 import { SummaryButton } from "./GroupSummaryChart";
-import { useSetAtom } from "jotai";
-import { navAtom } from "../components/MobileNavBar";
+import { NavBackButton, NavLeftToolBar } from "../components/NavBar";
 
 export default function GroupRoute() {
+
   const { groupId } = useParams<{ groupId: string }>();
   const authFetch = useAuthFetch()
   const { data } = useQuery({
@@ -25,17 +25,16 @@ export default function GroupRoute() {
   })
   const navigate = useNavigate()
 
-  const setNav = useSetAtom(navAtom)
-
-  setNav((prevNav) => ({
-    ...prevNav,
-    handleBackButton: () => {
-      navigate(-1);
-    }
-  }))
+  if (!groupId) {
+    throw new Error("groupId is required")
+  }
 
   return (
     <div>
+      <NavLeftToolBar>
+        <NavBackButton />
+      </NavLeftToolBar>
+
       <Box sx={{ p: 2 }}>
         <Stack direction="row" alignItems="baseline" gap={1} display="flex" justifyContent="space-between">
           <Typography variant="h4">{data?.name}</Typography>
@@ -53,7 +52,7 @@ export default function GroupRoute() {
         data={groupExpenses}
         onRefetchRequest={() => refetchGroupExpenses()}
       />
-      <Outlet />
+
     </div>
   )
 }

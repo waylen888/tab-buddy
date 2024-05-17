@@ -35,14 +35,14 @@ const InviteDialog = () => {
     console.debug(`submit`, values)
     try {
       await mutateAsync(values)
-      navigate(-1)
+      navigate("..")
     } catch (err) {
       enqueueSnackbar((err as Error).message, { variant: "error" })
     }
   }
 
   const handleClose = () => {
-    navigate(-1)
+    navigate("..")
   }
 
   return (

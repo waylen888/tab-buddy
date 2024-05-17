@@ -14,7 +14,7 @@ const ctx = createContext<{
 }>({} as any)
 
 const AuthProvider: React.FC<{
-  children: React.ReactNode
+  children?: React.ReactNode
 }> = ({ children }) => {
   const authFetch = useAuthFetch()
   const { data, error, isLoading, dataUpdatedAt } = useQuery({

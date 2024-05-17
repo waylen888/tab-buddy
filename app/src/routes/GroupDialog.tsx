@@ -34,7 +34,7 @@ export default function GroupDialog() {
     try {
       console.debug(`submit`, values)
       await mutateAsync(values)
-      navigate(-1)
+      navigate("..")
       enqueueSnackbar(`group created`, { variant: 'success' })
     } catch (err) {
       enqueueSnackbar((err as Error).message, { variant: 'error' })
@@ -42,7 +42,7 @@ export default function GroupDialog() {
     }
   }
   const handleClose = () => {
-    navigate(-1)
+    navigate("..")
   }
   return (
     <Dialog open>

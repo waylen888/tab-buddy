@@ -26,6 +26,12 @@
   },
   "comments": {
     "title": "留言",
-    "createAt": "建立時間"
+    "createAt": "建立時間",
+    "no_comments": "尚無留言..."
+  },
+  "bottom_nav": {
+    "friends": "朋友",
+    "groups": "群組",
+    "settings": "設定"
   }
 }
