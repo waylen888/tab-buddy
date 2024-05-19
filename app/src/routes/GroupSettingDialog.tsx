@@ -7,6 +7,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import { Controller, FormProvider, useForm, useFormContext } from "react-hook-form"
 import { useEffect } from "react"
 import { useSnackbar } from "notistack"
+import DialogCloseButton from "../components/DialogCloseButton"
 
 interface GroupModifyFormValues {
   name: string;
@@ -41,18 +42,8 @@ const GroupSettingDialog: React.FC<{}> = () => {
         Group Setting
       </DialogTitle>
 
-      <IconButton
-        aria-label="close"
-        onClick={handleClose}
-        sx={{
-          position: 'absolute',
-          right: 8,
-          top: 8,
-          color: (theme) => theme.palette.grey[500],
-        }}
-      >
-        <CloseIcon />
-      </IconButton>
+      <DialogCloseButton onClick={handleClose} />
+
       {
         isLoading
           ? (

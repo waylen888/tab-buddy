@@ -19,6 +19,7 @@ import { CATEGORIES, getCategory, getCategoryGroup } from "../components/Categor
 import Grid from "@mui/material/Unstable_Grid2/Grid2";
 import { useTranslation } from "react-i18next";
 import { useLastUsedCurrency } from "../hooks/store";
+import DialogCloseButton from "../components/DialogCloseButton";
 
 
 interface ExpenseFormValues {
@@ -93,18 +94,8 @@ export default function ExpenseCreateDialog() {
       <DialogTitle>
         {t("expense.create_dialog.title")}
       </DialogTitle>
-      <IconButton
-        aria-label="close"
-        onClick={handleClose}
-        sx={{
-          position: 'absolute',
-          right: 8,
-          top: 8,
-          color: (theme) => theme.palette.grey[500],
-        }}
-      >
-        <CloseIcon />
-      </IconButton>
+
+      <DialogCloseButton onClick={handleClose} />
 
       <FormProvider {...methods}>
         <form onSubmit={methods.handleSubmit(handleSubmit)} style={{ display: "contents" }}>

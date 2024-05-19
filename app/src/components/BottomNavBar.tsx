@@ -5,7 +5,7 @@ import ReceiptIcon from '@mui/icons-material/Receipt';
 import PeopleIcon from '@mui/icons-material/People';
 import SettingsIcon from '@mui/icons-material/Settings';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Paper } from '@mui/material';
+import { Paper, paperClasses } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 
 export default function BottomNavBar() {
@@ -26,6 +26,10 @@ export default function BottomNavBar() {
         onChange={(e, value) => {
           console.log(`bottom navigation onChange`, value)
           navigate(value)
+        }}
+        sx={{
+          paddingBottom: "env(safe-area-inset-bottom)",
+          height: `calc(56px + env(safe-area-inset-bottom))`
         }}
       >
         <BottomNavigationAction label={t("bottom_nav.friends")} icon={<PeopleIcon />} value="friends" />

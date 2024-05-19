@@ -4,7 +4,7 @@ import { atom, useAtomValue, useSetAtom } from "jotai"
 import { useAuthFetch } from "../hooks/api"
 import { useEffect } from "react"
 
-const userSettingAtom = atom<UserSetting | null>({
+const userSettingAtom = atom<UserSetting>({
   themeMode: "light",
   pushNotification: false,
 })

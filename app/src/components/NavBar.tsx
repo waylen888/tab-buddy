@@ -119,7 +119,11 @@ const ResponsiveAppBar = () => {
 
   return (
     <AppBar
-      position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}
+      position="fixed"
+      sx={{
+        zIndex: (theme) => theme.zIndex.drawer + 1,
+        paddingTop: "env(safe-area-inset-top)",
+      }}
     >
       <Toolbar>
         <Box

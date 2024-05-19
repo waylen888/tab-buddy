@@ -6,6 +6,7 @@ import { useAuthFetch } from "../hooks/api"
 import { useNavigate, useParams } from "react-router-dom"
 import { useSnackbar } from "notistack"
 import CloseIcon from '@mui/icons-material/Close';
+import DialogCloseButton from "../components/DialogCloseButton"
 
 interface InviteFormValues {
   username: string
@@ -48,18 +49,8 @@ const InviteDialog = () => {
   return (
     <Dialog open>
       <DialogTitle>Invite Friend</DialogTitle>
-      <IconButton
-        aria-label="close"
-        onClick={handleClose}
-        sx={{
-          position: 'absolute',
-          right: 8,
-          top: 8,
-          color: (theme) => theme.palette.grey[500],
-        }}
-      >
-        <CloseIcon />
-      </IconButton>
+
+      <DialogCloseButton onClick={handleClose} />
 
       <form onSubmit={methods.handleSubmit(onSubmit)}>
         <DialogContent dividers>

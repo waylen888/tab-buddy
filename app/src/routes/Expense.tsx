@@ -1,9 +1,9 @@
-import { HTMLAttributes, useEffect } from "react";
+import React, { HTMLAttributes, ReactNode, useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Outlet, useNavigate, useParams } from "react-router-dom"
 import { useAuthFetch } from "../hooks/api"
 import { ExpensePhoto, ExpenseWithSplitUsers } from "../model"
-import { Button, CircularProgress, Divider, IconButton, Stack, Typography } from "@mui/material"
+import { Box, Button, CircularProgress, Divider, IconButton, Stack, Typography, useTheme } from "@mui/material"
 import dayjs from "dayjs"
 import Comments from "./Comments"
 import ModeEditIcon from '@mui/icons-material/ModeEdit';
@@ -16,6 +16,7 @@ import { PhotoRenderParams } from "react-photo-view/dist/types";
 import { useSnackbar } from "notistack";
 import { useTranslation } from "react-i18next";
 import { NavBackButton, NavLeftToolBar, NavRightToolBar } from "../components/NavBar";
+import { css } from "@emotion/css";
 
 
 export default function Expense() {
@@ -46,7 +47,7 @@ export default function Expense() {
         </IconButton>
       </NavRightToolBar>
 
-      <Stack sx={{ p: 1 }}>
+      <FileUploadZone>
         <Stack direction="row" gap={2} alignItems="center">
           <Typography variant="h4">{data?.description}</Typography>
           <ImageUploadButton />
@@ -63,13 +64,57 @@ export default function Expense() {
             date: dayjs(data?.createAt).format("YYYY/MM/DD"),
           })}
         </Typography>
-      </Stack>
+      </FileUploadZone>
       <Divider />
       <Comments />
       <Outlet />
     </Stack >
   )
 }
+
+const FileUploadZone: React.FC<{
+  children?: ReactNode;
+}> = ({ children }) => {
+  const [dragEnter, setDragEnter] = useState(false)
+  const depthRef = useRef(0)
+  return (
+    <Stack
+      component="div"
+      sx={{ p: 1, opacity: dragEnter ? 0.2 : 1 }}
+      onDragEnter={(e) => {
+        e.preventDefault();
+        setDragEnter(true)
+        depthRef.current++
+      }}
+      onDragLeave={(e) => {
+        e.preventDefault();
+        depthRef.current--
+        if (depthRef.current > 0) return;
+        setDragEnter(false)
+      }}
+      onDragOver={(e) => {
+        e.preventDefault();
+        // e.dataTransfer.dropEffect = "copy"
+        console.log("drag over")
+        setDragEnter(true)
+      }}
+      onDrop={(e) => {
+        e.preventDefault();
+        for (const file of e.dataTransfer.files) {
+          console.log(`detect file`, file);
+
+        }
+        e.dataTransfer.clearData();
+        depthRef.current = 0
+        setDragEnter(false)
+      }}
+    >
+      {children}
+    </Stack>
+  )
+}
+
+
 
 const Photos: React.FC<{}> = () => {
   const { expenseId } = useParams<{ expenseId: string }>()
@@ -80,12 +125,22 @@ const Photos: React.FC<{}> = () => {
       return authFetch<ExpensePhoto[]>(`/api/expense/${expenseId}/photos`)
     }
   })
+  const theme = useTheme()
+
   return (
-    <PhotoProvider toolbarRender={() => {
-      return (
-        <AddPhotoAlternateIcon onClick={() => { alert("delete?") }} />
-      )
-    }}>
+    <PhotoProvider
+      className={css`
+      @supports (padding-top: env(safe-area-inset-top)) {
+        .PhotoView-Slider__BannerWrap {
+          padding-top: calc(${theme.spacing(1.5)} + env(safe-area-inset-top));
+        }
+      }`}
+      toolbarRender={() => {
+        return (
+          <AddPhotoAlternateIcon onClick={() => { alert("delete?") }} />
+        )
+      }}>
+
       <Stack direction="row" gap={2} sx={{
         overflowY: "auto",
       }}>
@@ -196,6 +251,40 @@ const ImageUploadButton = () => {
       enqueueSnackbar((err as Error).message, { variant: "error" })
     }
   }
+
+  useEffect(() => {
+    console.debug(`register clipboard event`)
+    const listenPaste = async (e: ClipboardEvent) => {
+      console.debug(`detect paste event`, e)
+      e.preventDefault();
+      const clipboardItems = typeof navigator?.clipboard?.read === 'function'
+        ? await navigator.clipboard.read()
+        : e.clipboardData?.files;
+
+      for (const clipboardItem of clipboardItems ?? []) {
+        let blob;
+        if (clipboardItem instanceof (File) && clipboardItem.type?.startsWith('image/')) {
+          // For files from `e.clipboardData.files`.
+          blob = clipboardItem
+          // Do something with the blob.
+          console.log(`detect image from clipboard(File)`, blob)
+        } else if (clipboardItem instanceof (ClipboardItem)) {
+          // For files from `navigator.clipboard.read()`.
+          const imageTypes = clipboardItem.types?.filter(type => type.startsWith('image/'))
+          for (const imageType of imageTypes) {
+            blob = await clipboardItem.getType(imageType);
+            // Do something with the blob.
+            console.log(`detect image from clipboard(ClipboardItem)`, blob)
+          }
+        }
+      }
+    }
+    document.addEventListener("paste", listenPaste);
+    return () => {
+      console.debug(`unregister clipboard event`)
+      document.removeEventListener("paste", listenPaste);
+    }
+  }, [])
 
   return (
     <>

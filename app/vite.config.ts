@@ -12,7 +12,6 @@ export default defineConfig({
         name: "TAB BUDDY",
         short_name: "TABBUD",
         description: "A simple expense tracker",
-        theme_color: "#1976D2",
         icons: [
           {
             src: "./public/android-chrome-192x192.png",

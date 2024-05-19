@@ -8,7 +8,7 @@ const FormattedAmount: React.FC<{
 }> = ({ currency, value, style }) => {
   const nf = Intl.NumberFormat(undefined, { style: "currency", currency: currency.code })
   return (
-    <span style={style}> {nf.format(+value)}</span>
+    <span style={style}> {nf.format(+(value ?? 0))}</span>
   )
 }
 

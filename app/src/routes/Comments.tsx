@@ -154,7 +154,7 @@ const CommentPostForm = () => {
         alignItems: "center",
         width: `calc(100% - ${fullScreen ? DRAWER_WIDTH : '0px'})`,
         position: "fixed",
-        bottom: 0,
+        bottom: "env(safe-area-inset-bottom)",
         left: 0,
         gap: 1,
         p: 1, pb: 8,

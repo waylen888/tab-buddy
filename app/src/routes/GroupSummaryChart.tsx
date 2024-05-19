@@ -14,6 +14,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import { useQuery } from "@tanstack/react-query";
 import { useAuthFetch } from "../hooks/api";
 import { format } from "../components/FormattedAmount";
+import DialogCloseButton from "../components/DialogCloseButton";
 
 export const SummaryButton = ({ groupId }: { groupId: string; }) => {
   const [open, setOpen] = useState<boolean>(false)
@@ -140,18 +141,9 @@ function SummaryChart({ open, onClose, groupId }: {
       <DialogTitle>
         Group Expense Summary
       </DialogTitle>
-      <IconButton
-        aria-label="close"
-        onClick={onClose}
-        sx={{
-          position: 'absolute',
-          right: 8,
-          top: 8,
-          color: (theme) => theme.palette.grey[500],
-        }}
-      >
-        <CloseIcon />
-      </IconButton>
+
+      <DialogCloseButton onClick={onClose} />
+
       <DialogContent dividers
         sx={{ height: "100%" }}
       >

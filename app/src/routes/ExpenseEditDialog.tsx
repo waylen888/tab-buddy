@@ -18,6 +18,7 @@ import FormattedAmount from "../components/FormattedAmount";
 import { CATEGORIES, getCategory, getCategoryGroup } from "../components/CategoryIcon";
 import Grid from "@mui/material/Unstable_Grid2/Grid2";
 import { useLastUsedCurrency } from "../hooks/store";
+import DialogCloseButton from "../components/DialogCloseButton";
 
 interface ExpenseFormValues {
   description: string;
@@ -71,7 +72,7 @@ export default function ExpenseEditDialog() {
           ...user,
           owed: data.splitUsers.find(user1 => user1.id === user.id)?.owed ?? false,
         })),
-        payerId: data.splitUsers.find(user => user.paid).id,
+        payerId: data.splitUsers.find(user => user.paid)?.id,
       })
     }
   }, [data, users, methods.reset])
@@ -135,18 +136,8 @@ export default function ExpenseEditDialog() {
       <DialogTitle>
         Expense
       </DialogTitle>
-      <IconButton
-        aria-label="close"
-        onClick={handleClose}
-        sx={{
-          position: 'absolute',
-          right: 8,
-          top: 8,
-          color: (theme) => theme.palette.grey[500],
-        }}
-      >
-        <CloseIcon />
-      </IconButton>
+
+      <DialogCloseButton onClick={handleClose} />
 
       <FormProvider {...methods}>
         <form onSubmit={methods.handleSubmit(handleSubmit)} style={{ display: "contents" }}>
@@ -186,6 +177,7 @@ export default function ExpenseEditDialog() {
             </Stack>
           </DialogContent>
           <DialogActions>
+
             <LoadingButton
               type="submit"
               loading={methods.formState.isSubmitting}
@@ -394,7 +386,7 @@ const CategoryField = () => {
               </li>
             )
           }}
-          groupBy={(option) => getCategoryGroup(option.key).title}
+          groupBy={(option) => getCategoryGroup(option.key)?.title ?? ""}
           renderGroup={(params) => (
             <li key={params.key}>
               <GroupHeader>{params.group}</GroupHeader>
