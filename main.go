@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"log/slog"
 	"os"
 
@@ -29,9 +30,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	slog.Info("create photo store dir", "dir", cfg.PhotoStoreDir)
-	if err := os.MkdirAll(cfg.PhotoStoreDir, 0755); err != nil {
-		slog.Error("create photo store dir", "error", err)
+	slog.Info("create data store dir", "dir", cfg.DataDir)
+	if err := os.MkdirAll(cfg.DataDir, 0755); err != nil {
+		slog.Error("create data store dir", "error", err)
 		os.Exit(1)
 	}
 
@@ -44,9 +45,15 @@ func main() {
 	defer db.Close()
 
 	g, ctx := errgroup.WithContext(context.Background())
+
 	g.Go(func() error {
-		return server.New(db, cfg).Run(ctx, cfg.HTTPSetting)
+		server, err := server.New(db, cfg)
+		if err != nil {
+			return fmt.Errorf("new server: %w", err)
+		}
+		return server.Run(ctx, cfg.HTTPSetting)
 	})
+
 	if err := g.Wait(); err != nil {
 		slog.Error("run server", "error", err)
 		os.Exit(1)

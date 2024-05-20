@@ -9,14 +9,13 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs, { Dayjs } from "dayjs";
 import { LoadingButton } from "@mui/lab";
-import CloseIcon from '@mui/icons-material/Close';
 import { Currency, ExpenseWithSplitUsers, User } from "../model";
 import { useEffect } from "react";
 
 import NumericFormatCustom from "../components/NumericFormat";
 import FormattedAmount from "../components/FormattedAmount";
 import { CATEGORIES, getCategory, getCategoryGroup } from "../components/CategoryIcon";
-import Grid from "@mui/material/Unstable_Grid2/Grid2";
+import Grid from "@mui/material/Grid";
 import { useLastUsedCurrency } from "../hooks/store";
 import DialogCloseButton from "../components/DialogCloseButton";
 

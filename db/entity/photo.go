@@ -2,12 +2,12 @@ package entity
 
 import "time"
 
-type CreateExpensePhotosArguments struct {
-	ExpenseID string
-	Photos    []ExpensePhoto
+type CreateExpenseAttachmentsArgument struct {
+	ExpenseID   string
+	Attachments []ExpenseAttachment
 }
 
-type ExpensePhoto struct {
+type ExpenseAttachment struct {
 	ID       string
 	Filename string
 	Size     int64

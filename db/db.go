@@ -8,6 +8,7 @@ type Database interface {
 	GetUser(ID string) (entity.User, error)
 	GetUserByUsername(username string) (entity.User, error)
 	CreateUser(username, displayName, email, password string, createType entity.UserCreateType) (entity.User, error)
+	ExpenseAccessPermissions(userID string, expenseID string) error
 
 	GetUserSetting(ID string) (entity.UserSetting, error)
 	UpdateUserSetting(userID string, themeMode *string, pushNotification *bool) (entity.UserSetting, error)
@@ -31,9 +32,10 @@ type Database interface {
 	DeleteComment(args entity.DeleteCommentArguments) error
 	GetExpenseComments(expenseID string) ([]entity.Comment, error)
 
-	CreateExpensePhotos(args entity.CreateExpensePhotosArguments) error
-	GetExpensePhotos(expenseID string) ([]entity.ExpensePhoto, error)
-	GetExpensePhoto(ID string) (entity.ExpensePhoto, error)
+	CreateExpenseAttachments(args entity.CreateExpenseAttachmentsArgument) error
+	DeleteExpenseAttachment(ID string) error
+	GetExpensePhotos(expenseID string) ([]entity.ExpenseAttachment, error)
+	GetExpensePhoto(ID string) (entity.ExpenseAttachment, error)
 
 	Close() error
 }

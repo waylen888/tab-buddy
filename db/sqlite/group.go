@@ -176,6 +176,22 @@ func (s *sqlite) GetExpense(ID string) (entity.ExpenseWithSplitUser, error) {
 	return expense, err
 }
 
+func (s *sqlite) ExpenseAccessPermissions(userID string, expenseID string) error {
+	ctx, cancel := context.WithTimeout(context.TODO(), s.timeout)
+	defer cancel()
+	var ok bool
+	err := sqlscan.Get(ctx, s.rwDB, &ok, `
+		SELECT 1 
+		FROM group_member  
+		JOIN group_expense 
+		ON group_member.group_id = group_expense.group_id
+		WHERE group_expense.expense_id = @expense_id AND group_member.user_id = @user_id`,
+		sql.Named("expense_id", expenseID),
+		sql.Named("user_id", userID),
+	)
+	return err
+}
+
 func (s *sqlite) CreateExpense(args entity.CreateExpenseArguments) (entity.Expense, error) {
 	ctx, cancel := context.WithTimeout(context.TODO(), s.timeout)
 	defer cancel()

@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"net/http"
 
@@ -17,11 +18,15 @@ type Server struct {
 	googleHandler *GoogleHandler
 }
 
-func New(db db.Database, cfg config.Config) *Server {
-	return &Server{
-		handler:       NewAPIHandler(db, finmind.NewClient(), cfg.PhotoStoreDir, mail.NewSender(cfg.SMTP)),
-		googleHandler: NewGoogleHandler(db, cfg.GoogleOAuth),
+func New(db db.Database, cfg config.Config) (*Server, error) {
+	handler, err := NewAPIHandler(db, finmind.NewClient(), cfg.DataDir, mail.NewSender(cfg.SMTP))
+	if err != nil {
+		return nil, fmt.Errorf("new handler: %w", err)
 	}
+	return &Server{
+		handler:       handler,
+		googleHandler: NewGoogleHandler(db, cfg.GoogleOAuth),
+	}, nil
 }
 
 func (s *Server) Run(ctx context.Context, httpSetting config.HTTPSetting) error {
@@ -58,7 +63,8 @@ func (s *Server) Run(ctx context.Context, httpSetting config.HTTPSetting) error 
 	authRoute.GET("/api/expense/:id/comments", s.handler.getExpenseComments)
 	authRoute.POST("/api/expense/:id/comment", s.handler.createExpenseComment)
 	authRoute.DELETE("/api/expense/:id/comment/:comment_id", s.handler.deleteExpenseComment)
-	authRoute.POST("/api/expense/:id/photos", s.handler.uploadExpensePhotos)
+	authRoute.POST("/api/expense/:id/attachment", s.handler.uploadExpenseAttachment)
+	authRoute.DELETE("/api/expense/:id/attachment/:attachment_id", s.handler.deleteExpenseAttachment)
 	authRoute.GET("/api/expense/:id/photos", s.handler.getExpensePhotos)
 	authRoute.GET("/api/me/setting", s.handler.getMeSetting)
 	authRoute.PATCH("/api/me/setting", s.handler.patchMeSetting)

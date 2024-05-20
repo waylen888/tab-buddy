@@ -3,12 +3,13 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Outlet, useNavigate, useParams } from "react-router-dom"
 import { useAuthFetch } from "../hooks/api"
 import { ExpensePhoto, ExpenseWithSplitUsers } from "../model"
-import { Box, Button, CircularProgress, Divider, IconButton, Stack, Typography, useTheme } from "@mui/material"
+import { CircularProgress, Divider, IconButton, Stack, Typography, useTheme } from "@mui/material"
 import dayjs from "dayjs"
 import Comments from "./Comments"
 import ModeEditIcon from '@mui/icons-material/ModeEdit';
 import FormattedAmount from "../components/FormattedAmount"
 import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate';
+import DeleteIcon from '@mui/icons-material/Delete';
 import imageCompression from "browser-image-compression";
 import { PhotoProvider, PhotoView } from "react-photo-view";
 import 'react-photo-view/dist/react-photo-view.css';
@@ -127,6 +128,21 @@ const Photos: React.FC<{}> = () => {
   })
   const theme = useTheme()
 
+  const queryClient = useQueryClient()
+  const { mutateAsync } = useMutation({
+    mutationFn: (id: string) => {
+      return authFetch(`/api/expense/${expenseId}/attachment/${id}`, {
+        method: "DELETE",
+        handleResponse: (response) => response.json()
+      })
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["expense", expenseId, "photos"],
+      })
+    }
+  })
+
   return (
     <PhotoProvider
       className={css`
@@ -135,9 +151,24 @@ const Photos: React.FC<{}> = () => {
           padding-top: calc(${theme.spacing(1.5)} + env(safe-area-inset-top));
         }
       }`}
-      toolbarRender={() => {
+
+      toolbarRender={({ images, index }) => {
         return (
-          <AddPhotoAlternateIcon onClick={() => { alert("delete?") }} />
+          <DeleteIcon color="error" onClick={async () => {
+            try {
+              const yes = window.confirm("delete?")
+              console.debug(`confirm`,)
+              if (!yes) return;
+
+              const id = images[index].originRef?.current?.dataset["photoid"];
+              if (id) {
+                await mutateAsync(id)
+              }
+            } catch (err) {
+              console.error(err)
+            }
+
+          }} />
         )
       }}>
 
@@ -166,8 +197,10 @@ const Photo: React.FC<{
   })
 
   return (
-    <PhotoView src={data}>
+    <PhotoView src={data} key={photo.id}>
       <img
+        key={photo.id}
+        data-photoid={photo.id}
         src={data}
         width={100}
         height={100}
@@ -219,7 +252,7 @@ const ImageUploadButton = () => {
   const authFetch = useAuthFetch()
   const { mutateAsync } = useMutation({
     mutationFn: async (formData: FormData) => {
-      return await authFetch(`/api/expense/${expenseId}/photos`, {
+      return await authFetch(`/api/expense/${expenseId}/attachment`, {
         method: "POST",
         body: formData
       })
@@ -242,7 +275,7 @@ const ImageUploadButton = () => {
             useWebWorker: true,
             fileType: "image/webp",
           });
-          formData.append('photo', compressedFile, file.name)
+          formData.append('image', compressedFile, file.name)
         }
         await mutateAsync(formData)
       }

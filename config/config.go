@@ -8,10 +8,10 @@ import (
 )
 
 type Config struct {
-	GoogleOAuth   GoogleOAuth `toml:"google_oauth"`
-	HTTPSetting   HTTPSetting `toml:"http_setting"`
-	PhotoStoreDir string      `toml:"photo_store_dir"`
-	SMTP          SMTPSetting `toml:"smtp"`
+	GoogleOAuth GoogleOAuth `toml:"google_oauth"`
+	HTTPSetting HTTPSetting `toml:"http_setting"`
+	DataDir     string      `toml:"data_dir"`
+	SMTP        SMTPSetting `toml:"smtp"`
 }
 
 type GoogleOAuth struct {
@@ -46,11 +46,11 @@ func New(cfgPath string) (Config, error) {
 		cfg.HTTPSetting.Listen = ":8081"
 	}
 
-	if cfg.PhotoStoreDir == "" {
+	if cfg.DataDir == "" {
 		wd, _ := os.Getwd()
-		cfg.PhotoStoreDir = filepath.Join(wd, "./photos")
-	} else if !filepath.IsAbs(cfg.PhotoStoreDir) {
-		cfg.PhotoStoreDir, _ = filepath.Abs(cfg.PhotoStoreDir)
+		cfg.DataDir = filepath.Join(wd, "./data")
+	} else if !filepath.IsAbs(cfg.DataDir) {
+		cfg.DataDir, _ = filepath.Abs(cfg.DataDir)
 	}
 
 	return cfg, nil
