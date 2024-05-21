@@ -3,7 +3,6 @@ module github.com/waylen888/tab-buddy
 go 1.22.1
 
 require (
-	github.com/disintegration/imaging v1.6.2
 	github.com/georgysavva/scany/v2 v2.1.3
 	github.com/gin-gonic/gin v1.9.1
 	github.com/golang-jwt/jwt/v5 v5.2.1
@@ -40,7 +39,6 @@ require (
 	github.com/ugorji/go/codec v1.2.12 // indirect
 	golang.org/x/arch v0.7.0 // indirect
 	golang.org/x/exp v0.0.0-20220303212507-bbda1eaf7a17 // indirect
-	golang.org/x/image v0.16.0 // indirect
 	golang.org/x/net v0.24.0 // indirect
 	golang.org/x/sys v0.20.0 // indirect
 	golang.org/x/text v0.15.0 // indirect
