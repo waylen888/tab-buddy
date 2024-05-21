@@ -65,8 +65,8 @@ export default function Expense() {
             date: dayjs(data?.createAt).format("YYYY/MM/DD"),
           })}
         </Typography>
+
       </FileUploadZone>
-      <Divider />
       <Comments />
       <Outlet />
     </Stack >
@@ -80,13 +80,74 @@ const FileUploadZone: React.FC<{
 
   if (!expenseId) throw Error("expenseId is required")
 
+  const [isFocus, setIsFocus] = useState(false)
   const [dragEnter, setDragEnter] = useState(false)
   const depthRef = useRef(0)
   const { mutateAsync, isPending } = useUploadAttachment(expenseId)
+
+
+  useEffect(() => {
+    console.debug(`register clipboard event`)
+    const listenPaste = async (e: ClipboardEvent) => {
+      if (!isFocus) {
+        return
+      }
+      console.debug(`detect paste event`, e)
+      e.preventDefault();
+      // const clipboardItems = typeof navigator?.clipboard?.read === 'function'
+      //   ? await navigator.clipboard.read()
+      //   : e.clipboardData?.files;
+      const clipboardItems = e.clipboardData?.files;
+
+      if (clipboardItems) {
+        clipboardItemsToFileList(clipboardItems).then((files) => {
+          return mutateAsync(files)
+        })
+      }
+    }
+    document.addEventListener("paste", listenPaste);
+    return () => {
+      console.debug(`unregister clipboard event`)
+      document.removeEventListener("paste", listenPaste);
+    }
+  }, [isFocus])
+
+  const editableDivRef = useRef<HTMLDivElement>(null)
+  const handleLongPress = (e: any) => {
+    // 阻止默认的长按行为
+    e.preventDefault();
+    // 将焦点设置到不可见的可编辑区域
+    editableDivRef?.current?.focus();
+  };
   return (
     <Stack
+      onClick={(e) => {
+        handleLongPress(e)
+      }}
+      onTouchStart={(e) => {
+        // 使用计时器来检测长按事件
+        // this.pressTimer = setTimeout(() => handleLongPress(e), 500);
+      }}
+      onTouchEnd={() => {
+        // 触摸结束时清除计时器
+        // clearTimeout(this.pressTimer);
+      }}
+      onContextMenu={(e) => e.preventDefault()} // 禁用右键菜单
+
+
+      onFocus={() => { setIsFocus(true) }}
+      onBlur={() => { setIsFocus(false) }}
+      tabIndex={0}
       component="div"
-      sx={{ p: 1, opacity: dragEnter ? 0.2 : 1 }}
+      sx={{
+        p: 1,
+        opacity: dragEnter ? 0.2 : 1,
+        transition: "transform 0.3s ease, box-shadow 0.3s ease",
+        ...(isFocus ? {
+          transform: "scale(1.01)",
+          boxShadow: "0px 0px 5px rgba(0, 0, 0, 0.5)",
+        } : {})
+      }}
       onDragEnter={(e) => {
         e.preventDefault();
         setDragEnter(true)
@@ -120,6 +181,17 @@ const FileUploadZone: React.FC<{
         }
       }}
     >
+      <div
+        ref={editableDivRef}
+        contentEditable
+        style={{
+          position: 'absolute',
+          opacity: 0,
+          left: '-9999px',
+          height: '1px',
+          width: '1px'
+        }}
+      ></div>
       {children}
     </Stack>
   )
@@ -344,29 +416,6 @@ const ImageUploadButton = () => {
   }
 
 
-
-  useEffect(() => {
-    console.debug(`register clipboard event`)
-    const listenPaste = async (e: ClipboardEvent) => {
-      console.debug(`detect paste event`, e)
-      e.preventDefault();
-      // const clipboardItems = typeof navigator?.clipboard?.read === 'function'
-      //   ? await navigator.clipboard.read()
-      //   : e.clipboardData?.files;
-      const clipboardItems = e.clipboardData?.files;
-
-      if (clipboardItems) {
-        clipboardItemsToFileList(clipboardItems).then((files) => {
-          return mutateAsync(files)
-        })
-      }
-    }
-    document.addEventListener("paste", listenPaste);
-    return () => {
-      console.debug(`unregister clipboard event`)
-      document.removeEventListener("paste", listenPaste);
-    }
-  }, [])
 
   return (
     <>
