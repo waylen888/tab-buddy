@@ -73,7 +73,13 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         }}
       /> */}
       <QueryClientProvider>
-        <SnackbarProvider dense anchorOrigin={{ vertical: "top", horizontal: "center" }}>
+        <SnackbarProvider
+          dense
+          anchorOrigin={{ vertical: "top", horizontal: "center" }}
+          style={{
+            marginTop: "env(safe-area-inset-top)",
+          }}
+        >
           <RouterProvider router={router} fallbackElement={null} />
         </SnackbarProvider>
       </QueryClientProvider>

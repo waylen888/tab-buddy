@@ -30,19 +30,19 @@ func (s *sqlite) CreateExpenseAttachments(args entity.CreateExpenseAttachmentsAr
 	})
 }
 
-func (s *sqlite) GetExpensePhotos(expenseID string) ([]entity.ExpenseAttachment, error) {
+func (s *sqlite) GetExpenseAttachments(expenseID string) ([]entity.ExpenseAttachment, error) {
 	eps := make([]entity.ExpenseAttachment, 0)
 	return eps, s.WithTx(context.Background(), func(ctx context.Context, tx *sql.Tx) error {
 		return sqlscan.Select(ctx, tx, &eps, `
 			SELECT id, filename, size, mime, create_at, update_at
 			FROM expense_attachment
-			WHERE expense_id = @expense_id AND mime LIKE 'image%';`,
+			WHERE expense_id = @expense_id;`,
 			sql.Named("expense_id", expenseID),
 		)
 	})
 }
 
-func (s *sqlite) GetExpensePhoto(ID string) (entity.ExpenseAttachment, error) {
+func (s *sqlite) GetExpenseAttachment(ID string) (entity.ExpenseAttachment, error) {
 	var ep entity.ExpenseAttachment
 	return ep, s.WithTx(context.Background(), func(ctx context.Context, tx *sql.Tx) error {
 		return sqlscan.Get(ctx, tx, &ep, `

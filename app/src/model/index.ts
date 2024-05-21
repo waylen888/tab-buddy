@@ -18,8 +18,13 @@ export interface Expense {
   createdBy: User
 }
 
-export interface ExpensePhoto {
+export interface ExpenseAttachment {
   id: string
+  filename: string
+  size: number;
+  mime: string;
+  createAt: string;
+  updateAt: string;
 }
 
 export interface ExpenseWithSplitUsers extends Expense {

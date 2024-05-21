@@ -7,6 +7,7 @@
     "createGroup": "建立群組"
   },
   "group": {
+    "total_expense": "總花費",
     "you_owes": "你欠",
     "owes_you": "欠你",
     "expenses": {

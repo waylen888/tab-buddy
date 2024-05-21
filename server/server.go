@@ -65,7 +65,7 @@ func (s *Server) Run(ctx context.Context, httpSetting config.HTTPSetting) error 
 	authRoute.DELETE("/api/expense/:id/comment/:comment_id", s.handler.deleteExpenseComment)
 	authRoute.POST("/api/expense/:id/attachment", s.handler.uploadExpenseAttachment)
 	authRoute.DELETE("/api/expense/:id/attachment/:attachment_id", s.handler.deleteExpenseAttachment)
-	authRoute.GET("/api/expense/:id/photos", s.handler.getExpensePhotos)
+	authRoute.GET("/api/expense/:id/attachments", s.handler.getExpenseAttachments)
 	authRoute.GET("/api/me/setting", s.handler.getMeSetting)
 	authRoute.PATCH("/api/me/setting", s.handler.patchMeSetting)
 

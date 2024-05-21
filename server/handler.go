@@ -5,8 +5,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"image"
-	"image/color"
 	"log/slog"
 	"mime"
 	"mime/multipart"
@@ -17,7 +15,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/disintegration/imaging"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/h2non/filetype"
@@ -34,12 +31,10 @@ import (
 )
 
 type APIHandler struct {
-	db            db.Database
-	rateGetter    finmind.TaiwanExchangeRateGetter
-	dataDir       string
-	mailSender    *mail.Sender
-	photoDir      string
-	attachmentDir string
+	db         db.Database
+	rateGetter finmind.TaiwanExchangeRateGetter
+	dataDir    string
+	mailSender *mail.Sender
 }
 
 func NewAPIHandler(
@@ -48,21 +43,11 @@ func NewAPIHandler(
 	dataDir string,
 	mailSender *mail.Sender,
 ) (*APIHandler, error) {
-	photoDir := path.Join(dataDir, "photo")
-	if err := os.MkdirAll(photoDir, 0755); err != nil {
-		return nil, fmt.Errorf("create photo directory: %w", err)
-	}
-	attachmentDir := path.Join(dataDir, "attachment")
-	if err := os.MkdirAll(attachmentDir, 0755); err != nil {
-		return nil, fmt.Errorf("create attachment directory: %w", err)
-	}
 	return &APIHandler{
-		db:            db,
-		rateGetter:    rateGetter,
-		dataDir:       dataDir,
-		mailSender:    mailSender,
-		photoDir:      photoDir,
-		attachmentDir: attachmentDir,
+		db:         db,
+		rateGetter: rateGetter,
+		dataDir:    dataDir,
+		mailSender: mailSender,
 	}, nil
 }
 
@@ -743,6 +728,11 @@ func (h *APIHandler) uploadExpenseAttachment(ctx *gin.Context) {
 				ctx.AbortWithError(http.StatusInternalServerError, err)
 				return
 			}
+		case "file":
+			if err := h.handleImageForm(ctx, formValue); err != nil {
+				ctx.AbortWithError(http.StatusInternalServerError, err)
+				return
+			}
 		default:
 			ctx.AbortWithError(http.StatusBadRequest, errors.New("invalid form"))
 			return
@@ -757,7 +747,7 @@ func (h *APIHandler) deleteExpenseAttachment(ctx *gin.Context) {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
-	if err := os.Remove(filepath.Join(h.attachmentDir, attachmentID)); err != nil {
+	if err := os.Remove(filepath.Join(h.dataDir, attachmentID)); err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
@@ -769,13 +759,9 @@ func (h *APIHandler) handleImageForm(ctx *gin.Context, formValue []*multipart.Fi
 	for _, fileHeader := range formValue {
 		ep, err := func() (entity.ExpenseAttachment, error) {
 			now := time.Now()
-			photoID := xid.NewWithTime(now).String()
-			storePath := filepath.Join(h.photoDir, photoID)
+			ID := xid.NewWithTime(now).String()
+			storePath := filepath.Join(h.dataDir, ID)
 			if err := ctx.SaveUploadedFile(fileHeader, storePath); err != nil {
-				return entity.ExpenseAttachment{}, err
-			}
-
-			if err := createThumbnail(storePath); err != nil {
 				return entity.ExpenseAttachment{}, err
 			}
 
@@ -785,7 +771,7 @@ func (h *APIHandler) handleImageForm(ctx *gin.Context, formValue []*multipart.Fi
 			}
 
 			return entity.ExpenseAttachment{
-				ID:       photoID,
+				ID:       ID,
 				Filename: fileHeader.Filename,
 				Size:     fileHeader.Size,
 				MIME:     ftype.MIME.Value,
@@ -795,7 +781,7 @@ func (h *APIHandler) handleImageForm(ctx *gin.Context, formValue []*multipart.Fi
 		if err != nil {
 			// upload failed, cleanup file
 			lo.ForEach(eps, func(ep entity.ExpenseAttachment, _ int) {
-				os.Remove(filepath.Join(h.photoDir, ep.ID))
+				os.Remove(filepath.Join(h.dataDir, ep.ID))
 			})
 			return err
 		}
@@ -809,35 +795,40 @@ func (h *APIHandler) handleImageForm(ctx *gin.Context, formValue []*multipart.Fi
 	if err != nil {
 		// write database failed, cleanup file
 		lo.ForEach(eps, func(ep entity.ExpenseAttachment, _ int) {
-			os.Remove(filepath.Join(h.photoDir, ep.ID))
+			os.Remove(filepath.Join(h.dataDir, ep.ID))
 		})
 		return err
 	}
 	return nil
 }
 
-func (h *APIHandler) getExpensePhotos(ctx *gin.Context) {
+func (h *APIHandler) getExpenseAttachments(ctx *gin.Context) {
 
-	photos, err := h.db.GetExpensePhotos(ctx.Param("id"))
+	attachments, err := h.db.GetExpenseAttachments(ctx.Param("id"))
 	if err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
-	ctx.JSON(http.StatusOK, lo.Map(photos, func(photo entity.ExpenseAttachment, _ int) model.ExpensePhoto {
-		return model.ExpensePhoto{
-			ID: photo.ID,
+	ctx.JSON(http.StatusOK, lo.Map(attachments, func(attachment entity.ExpenseAttachment, _ int) model.ExpenseAttachment {
+		return model.ExpenseAttachment{
+			ID:       attachment.ID,
+			Filename: attachment.Filename,
+			Size:     attachment.Size,
+			MIME:     attachment.MIME,
+			CreateAt: attachment.CreateAt,
+			UpdateAt: attachment.UpdateAt,
 		}
 	}))
 }
 
 func (h *APIHandler) staticPhoto(ctx *gin.Context) {
-	photo, err := h.db.GetExpensePhoto(ctx.Param("id"))
+	attachment, err := h.db.GetExpenseAttachment(ctx.Param("id"))
 	if err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
-	filepath := filepath.Join(h.photoDir, photo.ID)
+	filepath := filepath.Join(h.dataDir, attachment.ID)
 	if ctx.Query("thumbnail") != "" {
 		filepath = filepath + "-thumbnail"
 	}
@@ -850,23 +841,7 @@ func (h *APIHandler) staticPhoto(ctx *gin.Context) {
 	defer file.Close()
 
 	ctx.Header("Cache-Control", "max-age=31536000")
-	ctx.DataFromReader(http.StatusOK, photo.Size, photo.MIME, file, nil)
-}
-
-func createThumbnail(storePath string) error {
-
-	return nil
-
-	img, err := imaging.Open(storePath)
-	if err != nil {
-		return err
-	}
-	thumbnail := imaging.Thumbnail(img, 100, 100, imaging.CatmullRom)
-	// create a new blank image
-	dst := imaging.New(100, 100, color.NRGBA{0, 0, 0, 0})
-	// paste thumbnails into the new image side by side
-	dst = imaging.Paste(dst, thumbnail, image.Pt(0, 0))
-	return imaging.Save(dst, storePath+"-thumbnail")
+	ctx.DataFromReader(http.StatusOK, attachment.Size, attachment.MIME, file, nil)
 }
 
 func (h *APIHandler) getMeSetting(ctx *gin.Context) {

@@ -34,8 +34,8 @@ type Database interface {
 
 	CreateExpenseAttachments(args entity.CreateExpenseAttachmentsArgument) error
 	DeleteExpenseAttachment(ID string) error
-	GetExpensePhotos(expenseID string) ([]entity.ExpenseAttachment, error)
-	GetExpensePhoto(ID string) (entity.ExpenseAttachment, error)
+	GetExpenseAttachments(expenseID string) ([]entity.ExpenseAttachment, error)
+	GetExpenseAttachment(ID string) (entity.ExpenseAttachment, error)
 
 	Close() error
 }

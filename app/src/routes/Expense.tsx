@@ -1,14 +1,14 @@
 import React, { HTMLAttributes, ReactNode, useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { Outlet, useNavigate, useParams } from "react-router-dom"
+import { Link, Outlet, useNavigate, useParams } from "react-router-dom"
 import { useAuthFetch } from "../hooks/api"
-import { ExpensePhoto, ExpenseWithSplitUsers } from "../model"
+import { ExpenseAttachment, ExpenseWithSplitUsers } from "../model"
 import { CircularProgress, Divider, IconButton, Stack, Typography, useTheme } from "@mui/material"
 import dayjs from "dayjs"
 import Comments from "./Comments"
 import ModeEditIcon from '@mui/icons-material/ModeEdit';
 import FormattedAmount from "../components/FormattedAmount"
-import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate';
+import AttachFileIcon from '@mui/icons-material/AttachFile';
 import DeleteIcon from '@mui/icons-material/Delete';
 import imageCompression from "browser-image-compression";
 import { PhotoProvider, PhotoView } from "react-photo-view";
@@ -58,7 +58,8 @@ export default function Expense() {
           <FormattedAmount currency={data.currency} value={data.amount} />
         </Typography>
 
-        <Photos />
+        <Attachments />
+
         <Typography variant="caption">
           {t("expense.added_by_on", {
             name: data?.createdBy?.displayName,
@@ -117,74 +118,66 @@ const FileUploadZone: React.FC<{
 
 
 
-const Photos: React.FC<{}> = () => {
+const Attachments: React.FC<{}> = () => {
   const { expenseId } = useParams<{ expenseId: string }>()
   const authFetch = useAuthFetch()
   const { data } = useQuery({
-    queryKey: ["expense", expenseId, "photos"],
+    queryKey: ["expense", expenseId, "attachments"],
     queryFn: () => {
-      return authFetch<ExpensePhoto[]>(`/api/expense/${expenseId}/photos`)
+      return authFetch<ExpenseAttachment[]>(`/api/expense/${expenseId}/attachments`)
     }
   })
   const theme = useTheme()
-
-  const queryClient = useQueryClient()
-  const { mutateAsync } = useMutation({
-    mutationFn: (id: string) => {
-      return authFetch(`/api/expense/${expenseId}/attachment/${id}`, {
-        method: "DELETE",
-        handleResponse: (response) => response.json()
-      })
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["expense", expenseId, "photos"],
-      })
-    }
-  })
-
   return (
-    <PhotoProvider
-      className={css`
+    <Stack gap={2}>
+      <PhotoProvider
+        className={css`
       @supports (padding-top: env(safe-area-inset-top)) {
         .PhotoView-Slider__BannerWrap {
           padding-top: calc(${theme.spacing(1.5)} + env(safe-area-inset-top));
         }
       }`}
 
-      toolbarRender={({ images, index }) => {
-        return (
-          <DeleteIcon color="error" onClick={async () => {
-            try {
-              const yes = window.confirm("delete?")
-              console.debug(`confirm`,)
-              if (!yes) return;
+        toolbarRender={({ images, index }) => {
+          const id = images[index].originRef?.current?.dataset["photoid"];
+          if (id) {
+            return <AttachmentDeleteButton id={id} />
+          }
+          return null
+        }}>
 
-              const id = images[index].originRef?.current?.dataset["photoid"];
-              if (id) {
-                await mutateAsync(id)
-              }
-            } catch (err) {
-              console.error(err)
-            }
+        <Stack direction="row" gap={2} sx={{
+          overflowY: "auto",
+        }}>
+          {
+            data?.filter(attachment => attachment.mime.startsWith("image"))
+              .map((attachment) => (<Photo key={attachment.id} photo={attachment} />))
+          }
+        </Stack>
+      </PhotoProvider>
 
-          }} />
-        )
-      }}>
-
-      <Stack direction="row" gap={2} sx={{
-        overflowY: "auto",
-      }}>
+      <Stack gap={1}>
         {
-          data?.map((photo,) => (<Photo key={photo.id} photo={photo} />))
+          data?.filter(attachment => !attachment.mime.startsWith("image"))
+            .map((attachment) => (
+              <Stack key={attachment.id} direction="row" justifyContent="space-between" alignItems="center">
+                <a
+                  target="_blank"
+                  href={`/static/photo/${attachment.id}`}
+                >
+                  {attachment.filename}
+                </a>
+                <AttachmentDeleteButton id={attachment.id} />
+              </Stack>
+            ))
         }
       </Stack>
-    </PhotoProvider>
+    </Stack>
   )
 }
 
 const Photo: React.FC<{
-  photo: ExpensePhoto
+  photo: ExpenseAttachment
 }> = ({ photo }) => {
   const authFetch = useAuthFetch()
   const { data } = useQuery({
@@ -214,8 +207,47 @@ const Photo: React.FC<{
   )
 }
 
+const AttachmentDeleteButton: React.FC<{
+  id: string;
+}> = ({ id }) => {
+  const { expenseId } = useParams<{ expenseId: string }>()
+  const authFetch = useAuthFetch()
+  const queryClient = useQueryClient()
+  const { enqueueSnackbar } = useSnackbar()
+  const { mutateAsync } = useMutation({
+    mutationFn: (id: string) => {
+      return authFetch(`/api/expense/${expenseId}/attachment/${id}`, {
+        method: "DELETE",
+      })
+    },
+    onSuccess: () => {
+      enqueueSnackbar("刪除成功", { variant: "success" })
+      queryClient.invalidateQueries({
+        queryKey: ["expense", expenseId, "attachments"],
+      })
+    }
+  })
+  return (
+    <IconButton
+      size="small"
+      onClick={async () => {
+        try {
+          const yes = window.confirm("delete?")
+          console.debug(`confirm`,)
+          if (!yes) return;
+          await mutateAsync(id)
+        } catch (err) {
+          console.error(err)
+        }
+      }}
+    >
+      <DeleteIcon color="error" />
+    </IconButton>
+  )
+}
+
 const BigPhoto: React.FC<{
-  photo: ExpensePhoto
+  photo: ExpenseAttachment
 } & HTMLAttributes<HTMLDivElement> & PhotoRenderParams> = ({ photo, scale, ...attrs }) => {
   const authFetch = useAuthFetch()
   const { data, isLoading } = useQuery({
@@ -250,7 +282,7 @@ const ImageUploadButton = () => {
   const queryClient = useQueryClient()
   const { enqueueSnackbar } = useSnackbar()
   const authFetch = useAuthFetch()
-  const { mutateAsync } = useMutation({
+  const { mutateAsync, isPending } = useMutation({
     mutationFn: async (formData: FormData) => {
       return await authFetch(`/api/expense/${expenseId}/attachment`, {
         method: "POST",
@@ -258,7 +290,7 @@ const ImageUploadButton = () => {
       })
     }, onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ['expense', expenseId, 'photos'],
+        queryKey: ['expense', expenseId, 'attachments'],
       })
     },
   })
@@ -269,17 +301,24 @@ const ImageUploadButton = () => {
       if (files) {
         const formData = new FormData()
         for (const file of files) {
-          const compressedFile = await imageCompression(file, {
-            maxSizeMB: 1,
-            maxWidthOrHeight: 1024,
-            useWebWorker: true,
-            fileType: "image/webp",
-          });
-          formData.append('image', compressedFile, file.name)
+          if (file.type.startsWith("image")) {
+            // handle image types
+            const compressedFile = await imageCompression(file, {
+              maxSizeMB: 1,
+              maxWidthOrHeight: 1024,
+              useWebWorker: true,
+              fileType: "image/webp",
+            });
+            formData.append("image", compressedFile, file.name)
+          } else {
+            // handle the others
+            formData.append("file", file, file.name)
+          }
         }
         await mutateAsync(formData)
       }
       e.target.value = ''; // cleanup
+      enqueueSnackbar("上傳完成", { variant: "success" })
     } catch (err) {
       enqueueSnackbar((err as Error).message, { variant: "error" })
     }
@@ -321,12 +360,12 @@ const ImageUploadButton = () => {
 
   return (
     <>
-      <IconButton component="label">
-        <AddPhotoAlternateIcon />
+      <IconButton component="label" disabled={isPending}>
+        <AttachFileIcon />
         <input
           type="file"
-          accept="image/*"
-          id="camera"
+          accept="image/*,text/*,application/pdf"
+          id="file-select-input"
           hidden
           multiple
           onChange={handleSelectFile}

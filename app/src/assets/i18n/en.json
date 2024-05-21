@@ -7,6 +7,7 @@
     "createGroup": "Create Group"
   },
   "group": {
+    "total_expense": "Total",
     "you_owes": "You owes",
     "owes_you": "owes You",
     "expenses": {
