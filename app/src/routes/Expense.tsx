@@ -112,40 +112,24 @@ const FileUploadZone: React.FC<{
     }
   }, [isFocus])
 
-  const editableDivRef = useRef<HTMLDivElement>(null)
-  const handleLongPress = (e: any) => {
-    // 阻止默认的长按行为
-    e.preventDefault();
-    // 将焦点设置到不可见的可编辑区域
-    editableDivRef?.current?.focus();
-  };
+
   return (
     <Stack
-      onClick={(e) => {
-        handleLongPress(e)
-      }}
-      onTouchStart={(e) => {
-        // 使用计时器来检测长按事件
-        // this.pressTimer = setTimeout(() => handleLongPress(e), 500);
-      }}
-      onTouchEnd={() => {
-        // 触摸结束时清除计时器
-        // clearTimeout(this.pressTimer);
-      }}
-      onContextMenu={(e) => e.preventDefault()} // 禁用右键菜单
-
-
       onFocus={() => { setIsFocus(true) }}
       onBlur={() => { setIsFocus(false) }}
       tabIndex={0}
       component="div"
       sx={{
         p: 1,
-        opacity: dragEnter ? 0.2 : 1,
+        ...(dragEnter ? {
+          opacity: 0.2,
+          outline: "0.2rem dashed gray",
+          outlineOffset: "-0.5rem",
+        } : {}),
         transition: "transform 0.3s ease, box-shadow 0.3s ease",
         ...(isFocus ? {
-          transform: "scale(1.01)",
-          boxShadow: "0px 0px 5px rgba(0, 0, 0, 0.5)",
+          // transform: "scale(1.01)",
+          // boxShadow: "0px 0px 5px rgba(0, 0, 0, 0.5)",
         } : {})
       }}
       onDragEnter={(e) => {
@@ -181,17 +165,6 @@ const FileUploadZone: React.FC<{
         }
       }}
     >
-      <div
-        ref={editableDivRef}
-        contentEditable
-        style={{
-          position: 'absolute',
-          opacity: 0,
-          left: '-9999px',
-          height: '1px',
-          width: '1px'
-        }}
-      ></div>
       {children}
     </Stack>
   )
