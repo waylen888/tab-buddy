@@ -1,6 +1,6 @@
-import React, { HTMLAttributes, ReactNode, useEffect, useRef, useState } from "react";
+import React, { ReactNode, useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { Link, Outlet, useNavigate, useParams } from "react-router-dom"
+import { Outlet, useNavigate, useParams } from "react-router-dom"
 import { useAuthFetch } from "../hooks/api"
 import { ExpenseAttachment, ExpenseWithSplitUsers } from "../model"
 import { CircularProgress, Divider, IconButton, Stack, Typography, useTheme } from "@mui/material"
@@ -13,7 +13,6 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import imageCompression from "browser-image-compression";
 import { PhotoProvider, PhotoView } from "react-photo-view";
 import 'react-photo-view/dist/react-photo-view.css';
-import { PhotoRenderParams } from "react-photo-view/dist/types";
 import { useSnackbar } from "notistack";
 import { useTranslation } from "react-i18next";
 import { NavBackButton, NavLeftToolBar, NavRightToolBar } from "../components/NavBar";
@@ -77,8 +76,13 @@ export default function Expense() {
 const FileUploadZone: React.FC<{
   children?: ReactNode;
 }> = ({ children }) => {
+  const { expenseId } = useParams<{ expenseId: string }>();
+
+  if (!expenseId) throw Error("expenseId is required")
+
   const [dragEnter, setDragEnter] = useState(false)
   const depthRef = useRef(0)
+  const { mutateAsync, isPending } = useUploadAttachment(expenseId)
   return (
     <Stack
       component="div"
@@ -100,15 +104,20 @@ const FileUploadZone: React.FC<{
         console.log("drag over")
         setDragEnter(true)
       }}
-      onDrop={(e) => {
+      onDrop={async (e) => {
         e.preventDefault();
-        for (const file of e.dataTransfer.files) {
-          console.log(`detect file`, file);
 
+        if (isPending) return
+
+        try {
+          await mutateAsync(e.dataTransfer.files)
+        } catch (error) {
+          console.error(error)
+        } finally {
+          e.dataTransfer.clearData();
+          depthRef.current = 0
+          setDragEnter(false)
         }
-        e.dataTransfer.clearData();
-        depthRef.current = 0
-        setDragEnter(false)
       }}
     >
       {children}
@@ -139,7 +148,7 @@ const Attachments: React.FC<{}> = () => {
       }`}
 
         toolbarRender={({ images, index }) => {
-          const id = images[index].originRef?.current?.dataset["photoid"];
+          const id = images[index]?.originRef?.current?.dataset["photoid"];
           if (id) {
             return <AttachmentDeleteButton id={id} />
           }
@@ -246,43 +255,10 @@ const AttachmentDeleteButton: React.FC<{
   )
 }
 
-const BigPhoto: React.FC<{
-  photo: ExpenseAttachment
-} & HTMLAttributes<HTMLDivElement> & PhotoRenderParams> = ({ photo, scale, ...attrs }) => {
+const useUploadAttachment = (expenseId: string) => {
   const authFetch = useAuthFetch()
-  const { data, isLoading } = useQuery({
-    queryKey: ["static", "photo", photo.id],
-    queryFn: () => {
-      return authFetch(`/static/photo/${photo.id}`, {
-        handleResponse: (response) => response.blob().then((value) => URL.createObjectURL(value))
-      })
-    }
-  })
-  if (isLoading) {
-    return <CircularProgress />
-  }
-  console.log(`attrs.style?.width`, attrs.style?.width);
-
-  const elementSize = 400
-  const width = attrs.style?.width ?? 400;
-  const offset = (width as number - elementSize) / elementSize;
-  const childScale = scale === 1 ? scale + offset : 1 + offset;
-
-  return (
-    <div {...attrs}>
-      <div style={{ transform: `scale(${childScale})`, transformOrigin: '0 0' }}>
-        <img src={data} />
-      </div>
-    </div>
-  )
-}
-
-const ImageUploadButton = () => {
-  const { expenseId } = useParams<{ expenseId: string }>()
   const queryClient = useQueryClient()
-  const { enqueueSnackbar } = useSnackbar()
-  const authFetch = useAuthFetch()
-  const { mutateAsync, isPending } = useMutation({
+  const { mutateAsync, mutate, ...rest } = useMutation({
     mutationFn: async (formData: FormData) => {
       return await authFetch(`/api/expense/${expenseId}/attachment`, {
         method: "POST",
@@ -294,28 +270,71 @@ const ImageUploadButton = () => {
       })
     },
   })
+  const acceptType = (type: string | undefined) => {
+    return type?.startsWith('image/') || type?.startsWith('text/') || type?.startsWith('application/pdf')
+  }
+  const uploadFiles = async (files: FileList) => {
+    const formData = new FormData()
+    for (const file of files) {
+      if (!acceptType(file.type)) {
+        console.debug(`not acceptable type`, file)
+        continue
+      }
+      if (file.type.startsWith("image")) {
+        // handle image types
+        const compressedFile = await imageCompression(file, {
+          maxSizeMB: 1,
+          maxWidthOrHeight: 1024,
+          useWebWorker: true,
+          fileType: "image/webp",
+        });
+        formData.append("image", compressedFile, file.name)
+      } else {
+        // handle the others
+        formData.append("file", file, file.name)
+      }
+    }
+    return mutateAsync(formData)
+  }
+  return { mutateAsync: uploadFiles, ...rest }
+}
 
+
+async function clipboardItemsToFileList(clipboardItems: ClipboardItems | FileList) {
+  if (clipboardItems instanceof (FileList)) {
+    return clipboardItems
+  }
+
+  const files = [];
+  for (const item of clipboardItems) {
+    for (const type of item.types) {
+      const blob = await item.getType(type);
+      files.push(new File([blob], `clipboard-file-${Date.now()}`, { type: blob.type }));
+    }
+  }
+
+  // Helper function to create a FileList from an array of files
+  function createFileList(files: File[]) {
+    const dataTransfer = new DataTransfer();
+    files.forEach(file => dataTransfer.items.add(file));
+    return dataTransfer.files;
+  }
+
+  return createFileList(files);
+}
+
+const ImageUploadButton = () => {
+  const { expenseId } = useParams<{ expenseId: string }>()
+  const { enqueueSnackbar } = useSnackbar()
+
+  if (!expenseId) throw Error("expenseId is required")
+
+  const { mutateAsync, isPending } = useUploadAttachment(expenseId);
   const handleSelectFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     try {
       const files = e.target.files;
       if (files) {
-        const formData = new FormData()
-        for (const file of files) {
-          if (file.type.startsWith("image")) {
-            // handle image types
-            const compressedFile = await imageCompression(file, {
-              maxSizeMB: 1,
-              maxWidthOrHeight: 1024,
-              useWebWorker: true,
-              fileType: "image/webp",
-            });
-            formData.append("image", compressedFile, file.name)
-          } else {
-            // handle the others
-            formData.append("file", file, file.name)
-          }
-        }
-        await mutateAsync(formData)
+        await mutateAsync(files)
       }
       e.target.value = ''; // cleanup
       enqueueSnackbar("上傳完成", { variant: "success" })
@@ -324,31 +343,22 @@ const ImageUploadButton = () => {
     }
   }
 
+
+
   useEffect(() => {
     console.debug(`register clipboard event`)
     const listenPaste = async (e: ClipboardEvent) => {
       console.debug(`detect paste event`, e)
       e.preventDefault();
-      const clipboardItems = typeof navigator?.clipboard?.read === 'function'
-        ? await navigator.clipboard.read()
-        : e.clipboardData?.files;
+      // const clipboardItems = typeof navigator?.clipboard?.read === 'function'
+      //   ? await navigator.clipboard.read()
+      //   : e.clipboardData?.files;
+      const clipboardItems = e.clipboardData?.files;
 
-      for (const clipboardItem of clipboardItems ?? []) {
-        let blob;
-        if (clipboardItem instanceof (File) && clipboardItem.type?.startsWith('image/')) {
-          // For files from `e.clipboardData.files`.
-          blob = clipboardItem
-          // Do something with the blob.
-          console.log(`detect image from clipboard(File)`, blob)
-        } else if (clipboardItem instanceof (ClipboardItem)) {
-          // For files from `navigator.clipboard.read()`.
-          const imageTypes = clipboardItem.types?.filter(type => type.startsWith('image/'))
-          for (const imageType of imageTypes) {
-            blob = await clipboardItem.getType(imageType);
-            // Do something with the blob.
-            console.log(`detect image from clipboard(ClipboardItem)`, blob)
-          }
-        }
+      if (clipboardItems) {
+        clipboardItemsToFileList(clipboardItems).then((files) => {
+          return mutateAsync(files)
+        })
       }
     }
     document.addEventListener("paste", listenPaste);

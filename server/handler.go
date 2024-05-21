@@ -770,6 +770,10 @@ func (h *APIHandler) handleImageForm(ctx *gin.Context, formValue []*multipart.Fi
 				return entity.ExpenseAttachment{}, err
 			}
 
+			if ftype == filetype.Unknown {
+				ftype = filetype.NewType(filepath.Ext(fileHeader.Filename), fileHeader.Header.Get("Content-Type"))
+			}
+
 			return entity.ExpenseAttachment{
 				ID:       ID,
 				Filename: fileHeader.Filename,
