@@ -16,6 +16,13 @@
       "you_borrowd": "you borrowd",
       "you_lent": "you lent",
       "you": "YOU"
+    },
+    "remove_member_dialog": {
+      "title": "Remove member",
+      "content": "Are you sure you want to delete member {{name}}？",
+      "confirm": "Confirm",
+      "cancel": "Cancel",
+      "success_message": "Removed successfully!"
     }
   },
   "expense": {

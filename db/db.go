@@ -20,6 +20,7 @@ type Database interface {
 	DeleteGroup(ID string) error
 	GetGroupMembers(ID string) ([]entity.User, error)
 	AddUserToGroupByUsername(groupID string, username *string, email *string) error
+	RemoveMemeberFromGroup(groupID string, userID string) error
 	GetGroupExpenses(groupID string) ([]entity.ExpenseWithSplitUser, error)
 	GetExpense(ID string) (entity.ExpenseWithSplitUser, error)
 	CreateExpense(arg entity.CreateExpenseArguments) (entity.Expense, error)

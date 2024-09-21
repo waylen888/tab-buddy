@@ -512,6 +512,20 @@ func (h *APIHandler) getGroupMembers(ctx *gin.Context) {
 	}))
 }
 
+func (h *APIHandler) removeGroupMember(ctx *gin.Context) {
+	err := h.db.RemoveMemeberFromGroup(ctx.Param("id"), ctx.Param("member_id"))
+	if err != nil {
+		if errors.Is(err, db.ErrUserStillHasExpense) {
+			ctx.AbortWithError(http.StatusBadRequest, err)
+		} else {
+			ctx.AbortWithError(http.StatusInternalServerError, err)
+		}
+		return
+	}
+
+	ctx.Status(http.StatusOK)
+}
+
 func (h *APIHandler) inviteUserToGroup(ctx *gin.Context) {
 	var req struct {
 		Username *string `json:"username"`

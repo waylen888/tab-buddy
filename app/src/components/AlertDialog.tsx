@@ -1,4 +1,5 @@
-import { Dialog, DialogContent, DialogTitle } from "@mui/material"
+import { LoadingButton } from "@mui/lab"
+import { Button, Dialog, DialogActions, DialogContent, DialogTitle } from "@mui/material"
 import { createContext, useCallback, useContext, useState } from "react"
 
 const ctx = createContext<{
@@ -26,6 +27,16 @@ export const AlertDialogProvider: React.FC<{
     setProps(props)
     setOpen(true)
   }, [])
+
+  const handleConfirm = () => {
+    props.onConfirm?.();
+    setOpen(false);
+  }
+
+  const handleCancel = () => {
+    setOpen(false);
+  }
+
   return (
     <ctx.Provider value={{ openFunc }}>
       <Dialog open={open}>
@@ -35,6 +46,25 @@ export const AlertDialogProvider: React.FC<{
         <DialogContent dividers>
           {props.content}
         </DialogContent>
+        <DialogActions>
+          <LoadingButton
+            sx={{
+              display: props.cancelText ? undefined : 'none'
+            }}
+            onClick={handleConfirm}
+          >
+            {props.confirmText}
+          </LoadingButton>
+
+          <Button
+            sx={{
+              display: props.cancelText ? undefined : 'none'
+            }}
+            onClick={handleCancel}
+          >
+            {props.cancelText}
+          </Button>
+        </DialogActions>
       </Dialog>
       {children}
     </ctx.Provider>

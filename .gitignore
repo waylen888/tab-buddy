@@ -24,6 +24,6 @@ node_modules
 
 debug-data
 debug
-
+build/** 
 .DS_Store
 .DS_Store?

@@ -8,6 +8,8 @@ import { Controller, FormProvider, useForm, useFormContext } from "react-hook-fo
 import { useEffect } from "react"
 import { useSnackbar } from "notistack"
 import DialogCloseButton from "../components/DialogCloseButton"
+import { AlertDialogProvider, useAlertDialog } from "../components/AlertDialog"
+import { useTranslation } from "react-i18next"
 
 interface GroupModifyFormValues {
   name: string;
@@ -150,7 +152,15 @@ const Form = () => {
 
           <Divider></Divider>
 
-          {groupId ? <UserList groupId={groupId} /> : null}
+          {
+            groupId
+              ? (
+                <AlertDialogProvider>
+                  <UserList groupId={groupId} />
+                </AlertDialogProvider>
+              )
+              : null
+          }
         </Stack>
 
         <Outlet />
@@ -166,6 +176,33 @@ const UserList: React.FC<{ groupId: string }> = ({ groupId }) => {
     queryKey: ['group', groupId, 'members'],
     queryFn: () => authFetch<User[]>(`/api/group/${groupId}/members`)
   })
+  const { t } = useTranslation()
+  const queryClient = useQueryClient();
+  const { mutate } = useMutation({
+    mutationFn: (memberId: string) => authFetch(`/api/group/${groupId}/member/${memberId}`, {
+      method: 'DELETE',
+    }),
+    onSuccess: () => {
+      enqueueSnackbar(t("group.remove_member_dialog.success_message"), { variant: "success" });
+      queryClient.invalidateQueries({ queryKey: ['group', groupId, 'members'] })
+    },
+    onError: (err) => {
+      enqueueSnackbar(err.message, { variant: "error" })
+    }
+  });
+
+  const openDeleteAlert = useAlertDialog()
+  const { enqueueSnackbar } = useSnackbar()
+  const handleDelete = (memberId: string, name: string) => () => {
+    openDeleteAlert({
+      title: t("group.remove_member_dialog.title"),
+      content: t("group.remove_member_dialog.content", { name }),
+      confirmText: t("group.remove_member_dialog.confirm"),
+      cancelText: t("group.remove_member_dialog.cancel"),
+      onConfirm: async () => mutate(memberId),
+    })
+  }
+
   return (
     <Stack>
       <h2>Users</h2>
@@ -174,7 +211,10 @@ const UserList: React.FC<{ groupId: string }> = ({ groupId }) => {
       </Link>
       {
         data?.map((user, index) => (
-          <div key={user.id}>{index + 1} - {user.displayName}</div>
+          <Stack key={user.id}>
+            <div>{index + 1} - {user.displayName}</div>
+            <button onClick={handleDelete(user.id, user.displayName)}>delete</button>
+          </Stack>
         ))
       }
     </Stack>

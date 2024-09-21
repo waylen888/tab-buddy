@@ -16,6 +16,13 @@
       "you_borrowd": "你借了",
       "you_lent": "你借出",
       "you": "你"
+    },
+    "remove_member_dialog": {
+      "title": "刪除成員",
+      "content": "是否確認刪除成員 {{name}}？",
+      "confirm": "確認",
+      "cancel": "取消",
+      "success_message": "刪除成功！"
     }
   },
   "expense": {

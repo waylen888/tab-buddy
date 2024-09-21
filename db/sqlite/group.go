@@ -397,3 +397,54 @@ func (s *sqlite) AddUserToGroupByUsername(groupID string, username *string, emai
 	}
 	return err
 }
+
+func (s *sqlite) RemoveMemeberFromGroup(groupID string, userID string) error {
+	ctx, cancel := context.WithTimeout(context.TODO(), s.timeout)
+	defer cancel()
+	var count int
+	err := sqlscan.Get(ctx, s.rwDB, &count, `
+		SELECT COUNT(*) 
+		FROM user_expense 
+		WHERE user_id = @user_id 
+		AND expense_id IN (
+			SELECT expense_id FROM group_expense WHERE group_id = @group_id
+		)
+		AND (paid = 1 OR owed = 1)`,
+		sql.Named("group_id", groupID),
+		sql.Named("user_id", userID),
+	)
+	if err != nil {
+		return fmt.Errorf("check user status: %w", err)
+	}
+	if count > 0 {
+		return db.ErrUserStillHasExpense
+	}
+	return s.WithTx(ctx, func(ctx context.Context, tx *sql.Tx) error {
+		_, err = tx.ExecContext(
+			ctx,
+			`
+			DELETE FROM user_expense 
+			WHERE user_id = @user_id 
+			AND expense_id IN (
+				SELECT expense_id FROM group_expense WHERE group_id = @group_id
+			);
+			`,
+			sql.Named("group_id", groupID),
+			sql.Named("user_id", userID),
+		)
+		if err != nil {
+			return fmt.Errorf("clean user expense: %w", err)
+		}
+
+		_, err = tx.ExecContext(
+			ctx,
+			`
+			DELETE FROM group_member 
+			WHERE group_id = @group_id AND user_id = @user_id;
+			`,
+			sql.Named("group_id", groupID),
+			sql.Named("user_id", userID),
+		)
+		return err
+	})
+}

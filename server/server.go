@@ -57,6 +57,7 @@ func (s *Server) Run(ctx context.Context, httpSetting config.HTTPSetting) error 
 	authRoute.POST("/api/group/:id/expense", s.handler.createExpense)
 	authRoute.PUT("/api/group/:id/expense/:expense_id", s.handler.updateExpense)
 	authRoute.GET("/api/group/:id/members", s.handler.getGroupMembers)
+	authRoute.DELETE("/api/group/:id/member/:member_id", s.handler.removeGroupMember)
 	authRoute.POST("/api/group/:id/invite", s.handler.inviteUserToGroup)
 	authRoute.GET("/api/expense/:id", s.handler.getExpense)
 	authRoute.GET("/api/currencies", s.handler.getCurrencies)
