@@ -165,6 +165,18 @@ CREATE TABLE IF NOT EXISTS "user" (
   "update_at" DATETIME NOT NULL,
   PRIMARY KEY("id")
 );`),
+	lo.T2("friendship", `
+CREATE TABLE IF NOT EXISTS "friendship" (
+	"user_id_1"	TEXT NOT NULL,
+	"user_id_2"	TEXT NOT NULL,
+	"status" INTEGER NOT NULL DEFAULT 0, -- 0:'pending', 1:'accepted', 2:'blocked'
+	"created_at" DATETIME NOT NULL DEFAULT,
+	"updated_at" DATETIME NOT NULL DEFAULT,
+	PRIMARY KEY("user_id_1", "user_id_2"),
+	FOREIGN KEY("user_id_1") REFERENCES "user"("id") ON DELETE CASCADE,
+	FOREIGN KEY("user_id_2") REFERENCES "user"("id") ON DELETE CASCADE,
+	CHECK("user_id_1" < "user_id_2") 
+);`),
 	lo.T2("expense", `
 CREATE TABLE IF NOT EXISTS "expense" (
   "id"	TEXT NOT NULL,

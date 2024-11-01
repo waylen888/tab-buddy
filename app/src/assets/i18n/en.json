@@ -23,6 +23,12 @@
       "confirm": "Confirm",
       "cancel": "Cancel",
       "success_message": "Removed successfully!"
+    },
+    "invite_member_dialog": {
+      "title": "Invite member",
+      "content": "Please enter the email of the member",
+      "submit_button": "Invite",
+      "success_message": "Invited successfully!"
     }
   },
   "expense": {

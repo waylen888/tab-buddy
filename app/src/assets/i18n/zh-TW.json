@@ -23,6 +23,12 @@
       "confirm": "確認",
       "cancel": "取消",
       "success_message": "刪除成功！"
+    },
+    "invite_member_dialog": {
+      "title": "邀請成員",
+      "content": "請輸入成員的電子郵件",
+      "submit_button": "邀請",
+      "success_message": "邀請成功！"
     }
   },
   "expense": {

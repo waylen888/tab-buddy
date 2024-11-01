@@ -7,13 +7,16 @@ import { useNavigate, useParams } from "react-router-dom"
 import { useSnackbar } from "notistack"
 import CloseIcon from '@mui/icons-material/Close';
 import DialogCloseButton from "../components/DialogCloseButton"
+import { useTranslation } from "react-i18next"
 
 interface InviteFormValues {
-  username: string
+  username?: string
+  email?: string
 }
 
 const InviteDialog = () => {
   const { groupId } = useParams<{ groupId: string }>()
+  const { t } = useTranslation()
   const queryClient = useQueryClient();
   const authFetch = useAuthFetch()
   const { mutateAsync, isPending } = useMutation({
@@ -36,6 +39,7 @@ const InviteDialog = () => {
     console.debug(`submit`, values)
     try {
       await mutateAsync(values)
+      enqueueSnackbar(t('group.invite_member_dialog.success_message'), { variant: "success" })
       navigate("..")
     } catch (err) {
       enqueueSnackbar((err as Error).message, { variant: "error" })
@@ -48,20 +52,20 @@ const InviteDialog = () => {
 
   return (
     <Dialog open>
-      <DialogTitle>Invite Friend</DialogTitle>
+      <DialogTitle>{t('group.invite_member_dialog.title')}</DialogTitle>
 
       <DialogCloseButton onClick={handleClose} />
 
       <form onSubmit={methods.handleSubmit(onSubmit)}>
         <DialogContent dividers>
           <Controller
-            name="username"
+            name="email"
             control={methods.control}
             render={({ field }) => (
               <TextField
                 {...field}
                 autoFocus
-                placeholder="UserName"
+                placeholder={t('group.invite_member_dialog.content')}
               />
             )}
           />
@@ -72,7 +76,7 @@ const InviteDialog = () => {
             disabled={isPending || !methods.formState.isValid}
             type="submit"
           >
-            Submit
+            {t('group.invite_member_dialog.submit_button')}
           </LoadingButton>
         </DialogActions>
       </form>
