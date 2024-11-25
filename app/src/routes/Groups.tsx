@@ -4,9 +4,10 @@ import { useAuthFetch } from "../hooks/api"
 import { useQuery } from "@tanstack/react-query"
 import { useTranslation } from "react-i18next"
 import { NavRightToolBar } from "../components/NavBar"
-import { IconButton } from "@mui/material"
+import { Divider, IconButton, List, ListItem, ListItemButton, ListItemText } from "@mui/material"
 
 import AddIcon from '@mui/icons-material/Add';
+import { Fragment } from "react/jsx-runtime"
 
 export default function Groups() {
   const authFetch = useAuthFetch()
@@ -16,6 +17,11 @@ export default function Groups() {
   })
   const navigate = useNavigate()
   const { t } = useTranslation()
+
+  const handleClick = (id: string) => () => {
+    navigate(`/group/${id}`);
+  }
+
   return (
     <div>
       <NavRightToolBar>
@@ -25,15 +31,22 @@ export default function Groups() {
           <AddIcon />
         </IconButton>
       </NavRightToolBar>
-      <ul>
+      <List>
         {data?.map(group => (
-          <li key={group.id}>
-            <Link to={`/group/${group.id}`}>
-              {group.name}
-            </Link>
-          </li>
+          <Fragment key={group.id}>
+            <ListItem disablePadding>
+              <ListItemButton onClick={handleClick(group.id)}>
+                <ListItemText
+                  primary={group.name}
+                  primaryTypographyProps={{ variant: "h5" }}
+                  secondary={new Date(group.createAt).toLocaleDateString()}
+                />
+              </ListItemButton>
+            </ListItem>
+            <Divider />
+          </Fragment>
         ))}
-      </ul>
+      </List>
 
       <Outlet />
     </div>

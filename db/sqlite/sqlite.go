@@ -170,8 +170,8 @@ CREATE TABLE IF NOT EXISTS "friendship" (
 	"user_id_1"	TEXT NOT NULL,
 	"user_id_2"	TEXT NOT NULL,
 	"status" INTEGER NOT NULL DEFAULT 0, -- 0:'pending', 1:'accepted', 2:'blocked'
-	"created_at" DATETIME NOT NULL DEFAULT,
-	"updated_at" DATETIME NOT NULL DEFAULT,
+	"created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	"updated_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	PRIMARY KEY("user_id_1", "user_id_2"),
 	FOREIGN KEY("user_id_1") REFERENCES "user"("id") ON DELETE CASCADE,
 	FOREIGN KEY("user_id_2") REFERENCES "user"("id") ON DELETE CASCADE,

@@ -6,16 +6,17 @@ BUILD_DIR := $(shell pwd)/build
 GO_BIN := go
 
 build: test clean
-	# build server
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GO_BIN) build -trimpath -ldflags "-X gitlab01.mitake.com.tw/RD1/GO/mitake-minerva.git/v2/g.Version=$(VERSION) -X gitlab01.mitake.com.tw/RD1/GO/mitake-minerva.git/v2/g.GitRevision=$(GIT_REVISION) -w -s" -o ./build/linux/minerva ./cmd/minerva
-	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 $(GO_BIN) build -trimpath -ldflags "-X gitlab01.mitake.com.tw/RD1/GO/mitake-minerva.git/v2/g.Version=$(VERSION) -X gitlab01.mitake.com.tw/RD1/GO/mitake-minerva.git/v2/g.GitRevision=$(GIT_REVISION) -w -s" -o ./build/windows/minerva.exe ./cmd/minerva
-	#CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 $(GO_BIN) build -trimpath -ldflags "-X gitlab01.mitake.com.tw/RD1/GO/mitake-minerva.git/v2/g.Version=$(VERSION) -X gitlab01.mitake.com.tw/RD1/GO/mitake-minerva.git/v2/g.GitRevision=$(GIT_REVISION) -w -s" -o ./build/darwin/minerva ./cmd/minerva
+	CGO_ENABLED=1 GOOS=linux GOARCH=arm64 \
+	CC="zig cc -target aarch64-linux-musl" \
+	CXX="zig c++ -target aarch64-linux-musl" \
+	CGO_CFLAGS="-D_LARGEFILE64_SOURCE" \
+	$(GO_BIN) build \
+		-trimpath \
+		-tags="sqlite" \
+		-ldflags "-X github.com/waylen888/tab-buddy/g.Version=$(VERSION) -X github.com/waylen888/tab-buddy/g.GitRevision=$(GIT_REVISION) -w -s" \
+		-o ./build/linux/tabbud \
+		.
 
-	@cp ./config/minerva.yaml ./build/linux/minerva.yaml
-	# @cp ./config/minerva.yaml ./build/windows/minerva.yaml
-	# @cp ./config/minerva.yaml ./build/darwin/minerva.yaml
-	# package
-	# @mkdir ./release
 
 build-ldapcli: 
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GO_BIN) build -trimpath -ldflags "-X gitlab01.mitake.com.tw/RD1/GO/mitake-minerva.git/v2/g.Version=$(VERSION) -X gitlab01.mitake.com.tw/RD1/GO/mitake-minerva.git/v2/g.GitRevision=$(GIT_REVISION) -w -s" -o ./build/linux/ldapcli ./cmd/ldapcli

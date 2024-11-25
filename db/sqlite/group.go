@@ -25,7 +25,9 @@ func (s *sqlite) GetGroups(userID string) ([]entity.Group, error) {
 		ctx, s.rwDB, &groups, `
 		SELECT id, name, create_at, update_at 
 		FROM "group" 
-		WHERE id IN (SELECT group_id FROM group_member WHERE user_id = @user_id);`,
+		WHERE id IN (SELECT group_id FROM group_member WHERE user_id = @user_id)
+		ORDER BY create_at DESC
+		;`,
 		sql.Named("user_id", userID),
 	); err != nil {
 		return nil, err
