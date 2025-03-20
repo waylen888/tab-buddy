@@ -1,8 +1,10 @@
 package server
 
 import (
+	"context"
 	"crypto/md5"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -90,6 +92,83 @@ func (h *APIHandler) login(ctx *gin.Context) {
 		"exp":      time.Now().Add(time.Hour * 24 * 30).Unix(),
 	})
 	tokenStr, err := token.SignedString([]byte(TOKEN_SECRET))
+	if err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{
+		"token": tokenStr,
+		"user": model.User{
+			ID:          user.ID,
+			Username:    user.Username,
+			DisplayName: user.DisplayName,
+			Email:       user.Email,
+			CreateAt:    user.CreateAt,
+			UpdateAt:    user.UpdateAt,
+		},
+	})
+}
+
+func getGooglePeople(ctx context.Context, accessToken string) (PeopleResponse, error) {
+	req, err := http.NewRequestWithContext(ctx,
+		"GET",
+		"https://people.googleapis.com/v1/people/me?personFields=names,emailAddresses,metadata",
+		nil,
+	)
+	if err != nil {
+		return PeopleResponse{}, fmt.Errorf("new request: %w", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+accessToken)
+
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return PeopleResponse{}, fmt.Errorf("do request: %w", err)
+	}
+	defer res.Body.Close()
+
+	var resp PeopleResponse
+	if err := json.NewDecoder(res.Body).Decode(&resp); err != nil {
+		return PeopleResponse{}, fmt.Errorf("decode response: %w", err)
+	}
+	return resp, nil
+}
+
+func (h *APIHandler) loginByGoogleToken(ctx *gin.Context) {
+	// returning token and refresh_token
+	var req struct {
+		AccessToken string `json:"accessToken" binding:"required"`
+	}
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	people, err := getGooglePeople(ctx.Request.Context(), req.AccessToken)
+	if err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	// try login
+	user, err := h.db.GetUserByUsername(people.GetID())
+	if err != nil && errors.Is(err, sql.ErrNoRows) {
+		// create user
+		user, err = h.db.CreateUser(people.GetID(), people.GetDisplayName(), people.GetEmail(), "", entity.UserCreateTypeGoogle)
+		if err != nil {
+			ctx.AbortWithError(http.StatusInternalServerError, err)
+			return
+		}
+	} else if err != nil {
+		ctx.AbortWithError(http.StatusForbidden, err)
+		return
+	}
+
+	jwtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"id":       user.ID,
+		"username": user.Username,
+		"exp":      time.Now().Add(time.Hour * 24 * 30).Unix(),
+	})
+	tokenStr, err := jwtToken.SignedString([]byte(TOKEN_SECRET))
 	if err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
